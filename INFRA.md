@@ -305,3 +305,4 @@ Demo login (after seeding): `admin@bolder.local` / `admin123`.
 - **No DB client imports outside `*.repo.ts` and `**/db/**`**. Enforced by lint.
 - **No Node-only imports in `auth.config.ts` or `middleware.ts`**. Enforced by lint.
 - **`verbatimModuleSyntax` is on** — `import type { … }` for types, `import { … }` for runtime values. Mixing them fails the typecheck.
+- **`AUTH_SECRET` is mandatory and must be persistent.** Copy `.env.local.example` to `apps/web/.env.local` and put a real `openssl rand -base64 32` value in `AUTH_SECRET`. Without it, Auth.js v5 auto-generates one on each dev-server start, the next request 500s on `/api/auth/session`, and the client throws `ClientFetchError`. **Never commit `.env.local`.**
