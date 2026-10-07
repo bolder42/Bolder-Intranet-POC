@@ -66,7 +66,7 @@ The `.md` files in this repository are load-bearing for both humans onboarding a
 - **`MODULES.md`** — when the change adds, renames, removes, or alters the scope of a module; when access rules (READ / WRITE / READ-ONLY) change; or when a module's relationship to `Projects` (its parent) changes. Follow the language policy in section 1 of this file.
 - **New `.md` file** — when the change introduces a concept the team needs to know (a new architectural pattern, a new workflow, a new constraint) and no existing file covers it. Create a new file rather than overloading an unrelated one.
 
-**Do NOT modify `README.md`.** This file is human-authored. AI agents must leave it alone.
+**`README.md` — narrow exception.** This file is human-authored. AI agents MAY modify it ONLY to add or update a "How to run the project" section: install command, dev/build/test commands, ports, environment variables, demo credentials. Every other part of `README.md` (project description, team notes, anything else) is human-owned and agents MUST NOT edit it.
 
 **Do NOT read or consult `CONTRIBUTING.md`.** This file is for human developers only and describes human workflow (PR checklists, branch naming, code review expectations). AI agents must not act on its contents; doing so risks the agent applying human-process rules to its own work.
 
