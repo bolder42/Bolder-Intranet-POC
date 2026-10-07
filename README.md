@@ -1,19 +1,19 @@
 # 42-Team-Project
 Projeto em grupo passado para bolsistas da Turma 4
 
-## How to run the project
+## Como rodar o projeto
 
-Prerequisites: Node.js ≥ 22.12 and pnpm ≥ 12.6.
+Pré-requisitos: Node.js ≥ 22.12 e pnpm ≥ 12.6.
 
 ```bash
-# Install dependencies (runs better-sqlite3 native build)
+# Instalar dependências (executa o build nativo do better-sqlite3)
 pnpm install
 
-# Start backend (port 3001) and frontend (port 3000) in parallel
+# Iniciar backend (porta 3001) e frontend (porta 3000) em paralelo
 pnpm turbo run dev
 ```
 
-Open <http://localhost:3000>. Demo login (after seeding the DB):
+Abra <http://localhost:3000>. Login de demonstração (após popular o banco):
 
 ```bash
 pnpm --filter @bolder/api db:migrate
@@ -21,16 +21,16 @@ pnpm --filter @bolder/api seed
 # admin@bolder.local / admin123
 ```
 
-Useful one-shot commands:
+Comandos úteis:
 
-| Command | Effect |
+| Comando | Efeito |
 |---|---|
-| `pnpm turbo run typecheck` | Strict TypeScript check across all packages |
-| `pnpm turbo run test` | Vitest across all packages |
-| `pnpm turbo run lint` | ESLint flat config across all packages |
-| `pnpm turbo run build` | Production build (Next.js + tsc for backend) |
-| `pnpm --filter @bolder/db db:generate` | Regenerate Drizzle migration after schema changes |
+| `pnpm turbo run typecheck` | Verificação estrita do TypeScript em todos os pacotes |
+| `pnpm turbo run test` | Vitest em todos os pacotes |
+| `pnpm turbo run lint` | ESLint flat config em todos os pacotes |
+| `pnpm turbo run build` | Build de produção (Next.js + tsc para o backend) |
+| `pnpm --filter @bolder/db db:generate` | Regenera a migration do Drizzle após mudanças no schema |
 
-Environment variables (see `.env.example` for the full list): `DATABASE_URL`, `AUTH_SECRET`, `API_URL`, `NEXT_PUBLIC_API_URL`.
+Variáveis de ambiente (veja `.env.example` para a lista completa): `DATABASE_URL`, `AUTH_SECRET`, `API_URL`, `NEXT_PUBLIC_API_URL`.
 
-For the full architecture, three UI shells, module boundaries, and how to add a new module, see [`INFRA.md`](./INFRA.md).
+Para a arquitetura completa, os três shells de UI, os limites entre módulos e como adicionar um novo módulo, veja [`INFRA.md`](./INFRA.md).
