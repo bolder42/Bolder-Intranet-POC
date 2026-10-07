@@ -30,6 +30,11 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(function Inp
         name={name}
         className={classes}
         aria-invalid={error ? true : undefined}
+        // Browser extensions (password managers, autofill) commonly inject a
+        // "show password" button or background styles INSIDE the input element.
+        // That is invalid HTML and trips React's hydration check; we know the
+        // injected subtree is benign, so we opt out of the warning here.
+        suppressHydrationWarning
         {...props}
       />
       {error ? <span className="input-message">{error}</span> : null}
