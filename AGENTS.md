@@ -32,18 +32,58 @@ When in doubt about whether a translation preserves the spec faithfully, prefer 
 
 ---
 
-## 2. Project context
+## 2. Testing
+
+**Tests are required for new features and refactors.**
+
+- For any new feature or refactor, the agent MUST (1) add tests covering the new or changed behavior, and (2) run the **full monorepo test suite** to confirm all tests pass.
+- Pure documentation or config-only changes (e.g., updating `.md`, dependency version bumps, `tsconfig` tweaks) are exempt from the test requirement.
+
+**Failure policy: branch vs. merge.**
+
+- On a feature/working branch: failing tests are tolerated IF clearly marked (e.g., `it.todo()`, `it.skip`, or a comment explaining the gap). This lets the agent iterate without being blocked.
+- Before a PR is opened against `main` (or the change is otherwise considered final): ALL tests MUST pass. Failing tests at this stage MUST be fixed or the change must be reverted. A PR with red tests is not acceptable.
+
+**Definition of "done" for any code change:**
+
+1. Feature/refactor has tests covering it (when applicable).
+2. Full monorepo test suite has been run.
+3. All tests pass on the final state.
+4. Any new `.md` files or updates to existing ones (this file, `MODULES.md`) are committed in the same change.
+
+---
+
+## 3. Documentation sync
+
+**Documentation is part of "done."**
+
+The `.md` files in this repository are load-bearing for both humans onboarding and AI agents receiving context on each run. Stale documentation is a bug. When a change affects structure, scope, or onboarding, the relevant `.md` files MUST be updated in the same commit.
+
+**Which file to update:**
+
+- **`AGENTS.md`** — when the change affects how AI agents must behave: new agent rules, new locked architectural decisions, new POC exclusions, or any update to the translation policy or testing rules in this file.
+- **`MODULES.md`** — when the change adds, renames, removes, or alters the scope of a module; when access rules (READ / WRITE / READ-ONLY) change; or when a module's relationship to `Projects` (its parent) changes. Follow the language policy in section 1 of this file.
+- **New `.md` file** — when the change introduces a concept the team needs to know (a new architectural pattern, a new workflow, a new constraint) and no existing file covers it. Create a new file rather than overloading an unrelated one.
+
+**Do NOT modify `README.md`.** This file is human-authored. AI agents must leave it alone.
+
+**Do NOT read or consult `CONTRIBUTING.md`.** This file is for human developers only and describes human workflow (PR checklists, branch naming, code review expectations). AI agents must not act on its contents; doing so risks the agent applying human-process rules to its own work.
+
+**What "stale" looks like:**
+
+A `.md` file is considered stale when a reader following it would make a wrong decision — e.g., building a feature that has been excluded from POC scope, using a test pattern that has been superseded, or assuming a module boundary that no longer holds. If the rule would mislead, update the rule.
+
+**Translation reminder (cross-refers to section 1):**
+
+Source inputs to `MODULES.md` may be in Portuguese (board images, written descriptions, conversations). The agent MUST translate them to English per section 1 before writing into `MODULES.md`. Translations must preserve meaning exactly.
+
+---
+
+## 4. Project context
 
 Prototype POC of a corporate intranet for small/medium companies. Combines knowledge organization (Notion-like) with project tracking (kanban + calendar). The goal is a demonstrable prototype, not a production-grade system.
 
-**Stack (locked):** JavaScript only. Next.js App Router (full-stack), shadcn/ui + Tailwind, Tiptap (wiki editor), dnd-kit (kanban drag/drop), Drizzle ORM, SQLite for POC (Postgres later), Auth.js. Backend runtime: Node, Bun, or Deno.
-
-**Repo shape (locked):** pnpm workspaces + Turborepo monorepo.
-- `apps/web/` — Next.js app
-- `packages/db/` — Drizzle schema + repos
-- `packages/auth/` — session, RBAC helpers
-- `packages/ui/` — shared shadcn-based components
-- `packages/contracts/` — zod schemas, shared types
+**Stack:** fully JavaScript-based, with React on the frontend and Node, Bun, or Deno on the backend.
 
 **Deadlines:**
 - Progress preview: **October 9, 2026**
@@ -51,7 +91,7 @@ Prototype POC of a corporate intranet for small/medium companies. Combines knowl
 
 ---
 
-## 3. Locked architectural decisions
+## 5. Locked architectural decisions
 
 Do not re-litigate these without explicit team approval:
 
@@ -64,7 +104,7 @@ Do not re-litigate these without explicit team approval:
 
 ---
 
-## 4. POC scope boundaries — do NOT build
+## 6. POC scope boundaries — do NOT build
 
 Explicitly out of scope for the POC to prevent drift:
 
