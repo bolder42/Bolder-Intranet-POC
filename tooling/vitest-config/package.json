@@ -1,0 +1,14 @@
+{
+  "name": "@repo/vitest-config",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./setup": "./src/setup.ts"
+  },
+  "dependencies": {
+    "vitest": "catalog:",
+    "@vitest/coverage-v8": "catalog:"
+  }
+}

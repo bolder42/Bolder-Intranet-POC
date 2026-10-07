@@ -1,0 +1,44 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+  - "tooling/*"
+
+# Native modules that need to run their install/build script.
+# Without this, pnpm 10+ refuses to install them.
+# Catalog: every package references one of these versions.
+# This guarantees a single copy of zod/hono/etc. across the workspace.
+allowBuilds:
+  better-sqlite3: true
+  esbuild: true
+
+catalog:
+  # --- runtime ---
+  next: ^15.5.24
+  react: ^19.1.0
+  react-dom: ^19.1.0
+  hono: ^4.13.13
+  "@hono/node-server": ^2.1.3
+  "@hono/zod-validator": ^0.9.1
+  zod: ^4.6.5
+  drizzle-orm: ^0.45.3
+  drizzle-zod: ^0.8.3
+  better-sqlite3: ^13.0.3
+  next-auth: 5.0.0-beta.32
+  "@auth/core": ^0.40.0
+
+  # --- dev / tooling ---
+  typescript: ^5.6.0
+  vitest: ^5.0.3
+  "@vitest/coverage-v8": ^5.0.3
+  turbo: ^2.11.7
+  eslint: ^9.0.0
+  "@eslint/js": "^9.0.0"
+  "typescript-eslint": "^8.0.0"
+  prettier: ^3.6.0
+  "@types/node": ^22.10.0
+  "@types/better-sqlite3": ^9.6.0
+  "@types/react": ^19.0.0
+  "@types/react-dom": ^19.0.0
+  tsx: ^4.23.0
+  drizzle-kit: ^0.31.11
+  dotenv: ^16.4.5

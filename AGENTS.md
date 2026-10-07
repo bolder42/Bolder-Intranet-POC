@@ -38,6 +38,7 @@ When in doubt about whether a translation preserves the spec faithfully, prefer 
 
 - For any new feature or refactor, the agent MUST (1) add tests covering the new or changed behavior, and (2) run the **full monorepo test suite** to confirm all tests pass.
 - Pure documentation or config-only changes (e.g., updating `.md`, dependency version bumps, `tsconfig` tweaks) are exempt from the test requirement.
+- Every workspace package (`apps/*`, `packages/*`, `tooling/*`) MUST declare `test`, `lint`, `typecheck`, and `build` scripts in its `package.json`. Turborepo silently skips packages that are missing a given task, so a new package without a `test` script would let untested code into the codebase unnoticed. When adding a new package, verify it shows up in `turbo run test` output from the repo root.
 
 **Failure policy: branch vs. merge.**
 
@@ -119,3 +120,16 @@ Explicitly out of scope for the POC to prevent drift:
 - Multi-tenant isolation — single-tenant POC, revisit later
 
 When in doubt about whether something belongs in the POC, ask the team before building it.
+
+---
+
+## 7. Base infrastructure
+
+The stack, folder layout, three UI shells, module boundaries, role guards, and Hono RPC patterns are documented in `INFRA.md`. Module owners MUST read it before adding a backend module or a new page.
+
+Key invariants the infrastructure enforces (see `INFRA.md` for full detail):
+
+- The backend DB client is imported only by `*.repo.ts` files and `**/db/**` (ESLint-enforced).
+- `auth.config.ts` and `middleware.ts` run on the Edge runtime — Node-only imports are ESLint-forbidden.
+- Frontend call sites use `api.api.<path>` because the server's `basePath('/api')` becomes a top-level client property.
+- Every workspace package MUST declare `test`, `lint`, `typecheck`, and `build` scripts (see §2 above).

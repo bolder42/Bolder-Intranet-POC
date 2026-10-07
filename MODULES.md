@@ -112,3 +112,9 @@ Always belongs to a project — it is not standalone.
 | Schedule per project    | Tech Lead (project participant)              |
 | Task view per project   | Any project participant                      |
 | Any operation           | Admin (always allowed, even if not explicit)  |
+
+---
+
+## Base infrastructure
+
+This file describes **what** each module is. For **how** the modules are wired together — the monorepo layout, the three UI shells, the data-layer boundaries, the role guards, the Hono RPC end-to-end types — see `INFRA.md`.
