@@ -10,12 +10,13 @@
   "packageManager": "pnpm@12.6.0",
   "scripts": {
     "build": "turbo run build",
-    "dev": "turbo run dev",
+    "dev": "node scripts/dev-runner.mjs",
     "test": "turbo run test",
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "ports:clean": "bash scripts/ports-clean.sh",
     "clean": "turbo run clean && rm -rf node_modules .turbo"
   },
   "devDependencies": {

@@ -1,4 +1,18 @@
 import type { NextConfig } from 'next';
+import { resolve } from 'node:path';
+import { config as loadEnv } from 'dotenv';
+
+/**
+ * Load the monorepo root `.env` into `process.env` before Next.js evaluates
+ * any server code. Next only auto-loads `.env*` from its own directory
+ * (`apps/web/`), but the project's single source of truth lives at the repo
+ * root alongside `.env.example`. Loading it here makes `AUTH_SECRET`,
+ * `API_URL`, etc. visible to middleware, route handlers, and Auth.js.
+ *
+ * Safe to call repeatedly: dotenv does not overwrite existing process.env
+ * entries, so a real `apps/web/.env.local` always wins over the root.
+ */
+loadEnv({ path: resolve(__dirname, '../../.env') });
 
 /**
  * Next.js configuration for the Bolder Intranet frontend.

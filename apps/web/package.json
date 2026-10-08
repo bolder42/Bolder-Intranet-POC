@@ -33,6 +33,7 @@
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
     "@vitejs/plugin-react": "^6.0.0",
+    "dotenv": "catalog:",
     "eslint": "catalog:",
     "jsdom": "^30.0.0",
     "typescript": "catalog:",

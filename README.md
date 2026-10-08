@@ -10,7 +10,7 @@ Pré-requisitos: Node.js ≥ 22.12 e pnpm ≥ 12.6.
 pnpm install
 
 # Iniciar backend (porta 3001) e frontend (porta 3000) em paralelo
-pnpm turbo run dev
+pnpm dev
 ```
 
 Abra <http://localhost:3000>. Login de demonstração (após popular o banco):
@@ -30,6 +30,7 @@ Comandos úteis:
 | `pnpm turbo run lint` | ESLint flat config em todos os pacotes |
 | `pnpm turbo run build` | Build de produção (Next.js + tsc para o backend) |
 | `pnpm --filter @bolder/db db:generate` | Regenera a migration do Drizzle após mudanças no schema |
+| `pnpm ports:clean` | Libera as portas 3000/3001 e mata processos órfãos do `dev` (recovery quando Ctrl+C não foi suficiente) |
 
 Variáveis de ambiente (veja `.env.example` para a lista completa): `DATABASE_URL`, `AUTH_SECRET`, `API_URL`, `NEXT_PUBLIC_API_URL`.
 
