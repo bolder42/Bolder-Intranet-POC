@@ -21,21 +21,28 @@ vi.mock('@/app/actions', () => ({
 import { Sidebar } from './sidebar';
 
 describe('Sidebar', () => {
-  it('renders the primary nav links', () => {
+  it('renders the dashboard link as active', () => {
     render(<Sidebar user={{ name: 'Ada Lovelace', email: 'ada@example.com', role: 'admin' }} />);
 
-    expect(screen.getByRole('link', { name: 'Home' })).toHaveAttribute('href', '/app');
-    expect(screen.getByRole('link', { name: 'Projects' })).toHaveAttribute(
-      'href',
-      '/app/projects',
-    );
+    const dashboard = screen.getByRole('link', { name: 'Dashboard' });
+    expect(dashboard).toHaveAttribute('href', '/app');
+    expect(dashboard).toHaveAttribute('aria-current', 'page');
   });
 
-  it('shows the user name, role badge, and sign-out control', () => {
+  it('shows the workspace name and role', () => {
     render(<Sidebar user={{ name: 'Ada Lovelace', email: 'ada@example.com', role: 'tech_lead' }} />);
 
     expect(screen.getByText('Ada Lovelace')).toBeInTheDocument();
     expect(screen.getByText('Tech Lead')).toBeInTheDocument();
+  });
+
+  it('renders project navigation and the sign-out control', () => {
+    render(<Sidebar user={{ name: 'Ada Lovelace', email: 'ada@example.com', role: 'dev' }} />);
+
+    expect(screen.getByRole('link', { name: 'All projects' })).toHaveAttribute(
+      'href',
+      '/app/projects',
+    );
     expect(screen.getByRole('button', { name: 'Sign out' })).toBeInTheDocument();
   });
 

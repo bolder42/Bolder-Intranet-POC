@@ -1,11 +1,11 @@
 import type { ReactNode } from 'react';
 import { redirect } from 'next/navigation';
 
-import { Header } from '@/components/shell/header';
-import { Sidebar } from '@/components/shell/sidebar';
+import { AppShell } from '@/components/shell/app-shell';
 
 import { auth } from '@/auth';
 
+import '@bolder/ui/styles.css';
 import './app-shell.css';
 
 /**
@@ -22,13 +22,5 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
     redirect('/auth/login');
   }
 
-  return (
-    <div className="app-shell">
-      <Sidebar user={session.user} />
-      <div className="app-main">
-        <Header user={session.user} />
-        <main className="app-content">{children}</main>
-      </div>
-    </div>
-  );
+  return <AppShell user={session.user}>{children}</AppShell>;
 }

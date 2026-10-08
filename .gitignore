@@ -1,5 +1,8 @@
 projeto-1-bolder-intranet.pdf
 
+# Editor / agent runtime state (sessions, cached screenshots, internal data)
+.opencode/
+
 # Env
 .env
 .env.local

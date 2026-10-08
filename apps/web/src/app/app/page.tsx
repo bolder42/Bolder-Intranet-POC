@@ -1,9 +1,15 @@
-import type { HomeSummary } from '@bolder/shared';
+import type { HomeSummary, Project } from '@bolder/shared';
 
 import { auth } from '@/auth';
-import { Card, CardBody, CardHeader } from '@/components/ui';
+import {
+  DashboardHeader,
+  FloatingToolbar,
+  NotesGrid,
+  ProjectsWidget,
+  QuickLinksCallout,
+  TasksWidget,
+} from '@/components/home';
 import { api, getAuthHeaders } from '@/lib/api';
-import { getRoleLabel } from '@/lib/utils';
 
 /**
  * HOME working stub.
@@ -23,7 +29,8 @@ const MOCK_SUMMARY: HomeSummary = {
       id: 1,
       projectId: 1,
       title: 'Onboarding guide',
-      content: '',
+      content:
+        'Welcome to Bolder! This guide covers the basics of navigating the intranet, finding projects, and contributing to the wiki.',
       authorId: null,
       updatedAt: Date.now(),
     },
@@ -31,6 +38,15 @@ const MOCK_SUMMARY: HomeSummary = {
       id: 2,
       projectId: 1,
       title: 'Architecture decisions',
+      content:
+        'A living record of the technical choices behind the intranet POC, including the three UI shells and module boundaries.',
+      authorId: null,
+      updatedAt: Date.now(),
+    },
+    {
+      id: 3,
+      projectId: 2,
+      title: 'Q4 roadmap',
       content: '',
       authorId: null,
       updatedAt: Date.now(),
@@ -38,6 +54,23 @@ const MOCK_SUMMARY: HomeSummary = {
   ],
   upcomingDeadlines: [],
 };
+
+const MOCK_PROJECTS: Project[] = [
+  {
+    id: 1,
+    name: 'Bolder Intranet',
+    description: 'Company intranet POC.',
+    createdBy: null,
+    createdAt: Date.now(),
+  },
+  {
+    id: 2,
+    name: 'Website Refresh',
+    description: 'Marketing site refresh.',
+    createdBy: null,
+    createdAt: Date.now(),
+  },
+];
 
 export default async function HomePage() {
   const session = await auth();
@@ -50,6 +83,9 @@ export default async function HomePage() {
     const headers = await getAuthHeaders();
     const response = await api.api.home.summary.$get({}, { headers });
     if (response.ok) {
+      // TODO: validate against HomeSummarySchema before using — the runtime
+      // type from response.json() is `unknown`, and the Hono RPC chain only
+      // gives us compile-time guarantees. Schema.parse catches drift.
       summary = (await response.json()) as unknown as HomeSummary;
       isMock = false;
     }
@@ -57,45 +93,48 @@ export default async function HomePage() {
     // Backend not reachable during POC development — keep mock data.
   }
 
+  let projects = MOCK_PROJECTS;
+  try {
+    const headers = await getAuthHeaders();
+    const response = await api.api.projects.$get({}, { headers });
+    if (response.ok) {
+      // TODO: validate against the projects response schema before using.
+      const data = (await response.json()) as unknown as { projects: Project[] };
+      projects = data.projects;
+    }
+  } catch {
+    // Backend not reachable — fall back to mock projects.
+  }
+
   return (
-    <section className="home">
-      <h1>Welcome, {me?.name ?? me?.email ?? 'there'}</h1>
-      <p className="stat-label">
-        Signed in as {getRoleLabel(me?.role)}.
-        {isMock ? ' Showing mock data (API not connected yet).' : null}
-      </p>
+    <>
+      <section className="dashboard">
+        <DashboardHeader userName={me?.name ?? me?.email ?? 'there'} />
 
-      <div className="home-grid">
-        <Card>
-          <CardHeader>Projects</CardHeader>
-          <CardBody>
-            <p className="stat-value">{summary.projectCount}</p>
-            <p className="stat-label">active projects</p>
-          </CardBody>
-        </Card>
+        <QuickLinksCallout />
 
-        <Card>
-          <CardHeader>Tasks</CardHeader>
-          <CardBody>
-            <p className="stat-value">{summary.overdueTaskCount}</p>
-            <p className="stat-label">
-              overdue of {summary.taskCount} task{summary.taskCount === 1 ? '' : 's'}
-            </p>
-          </CardBody>
-        </Card>
+        <div className="dashboard-zone">
+          <div className="dashboard-zone-column">
+            <TasksWidget totalCount={summary.taskCount} />
+          </div>
+          <div className="dashboard-zone-column">
+            <ProjectsWidget count={summary.projectCount} projects={projects} />
+          </div>
+        </div>
 
-        <Card>
-          <CardHeader>Recent Activity</CardHeader>
-          <CardBody>
-            {/* TODO: replace with real data from the Wiki module. */}
-            <ul className="list-plain">
-              {summary.recentWiki.map((page) => (
-                <li key={page.id}>{page.title}</li>
-              ))}
-            </ul>
-          </CardBody>
-        </Card>
-      </div>
-    </section>
+        <NotesGrid pages={summary.recentWiki} />
+
+        {isMock ? (
+          <p className="dashboard-meta" style={{ marginTop: 48 }}>
+            Showing mock data — the API is not connected yet.
+          </p>
+        ) : null}
+      </section>
+
+      <FloatingToolbar
+        userName={me?.name ?? me?.email ?? 'User'}
+        userRole={me?.role ?? null}
+      />
+    </>
   );
 }

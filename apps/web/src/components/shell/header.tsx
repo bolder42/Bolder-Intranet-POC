@@ -1,39 +1,37 @@
-import { getRoleLabel } from '@/lib/utils';
-
-export interface HeaderUser {
-  name?: string | null;
-  email?: string | null;
-  role?: string | null;
-}
+import { SidebarToggle } from './sidebar-toggle';
+import { ThemeToggle } from './theme-toggle';
 
 export interface HeaderProps {
-  user?: HeaderUser | null;
+  collapsed: boolean;
+  onToggleSidebar: () => void;
   breadcrumbs?: string[];
 }
 
 /**
- * App-shell top bar: breadcrumbs (optional) and the current user.
+ * App-shell top bar: sidebar toggle, breadcrumbs (optional), and theme toggle.
+ * User identity is shown in the sidebar workspace card and the floating
+ * toolbar avatar menu, so the top bar stays chrome-only.
  */
-export function Header({ user, breadcrumbs }: HeaderProps) {
-  const displayName = user?.name ?? user?.email ?? 'Guest';
-
+export function Header({ collapsed, onToggleSidebar, breadcrumbs }: HeaderProps) {
   return (
     <header className="app-header">
-      <div className="app-header-breadcrumbs">
-        {breadcrumbs && breadcrumbs.length > 0 ? (
-          <nav aria-label="Breadcrumb">
-            {breadcrumbs.map((crumb) => (
-              <span key={crumb} className="breadcrumb">
-                {crumb}
-              </span>
-            ))}
-          </nav>
-        ) : null}
+      <div className="app-header-left">
+        <SidebarToggle collapsed={collapsed} onToggle={onToggleSidebar} />
+        <div className="app-header-breadcrumbs">
+          {breadcrumbs && breadcrumbs.length > 0 ? (
+            <nav aria-label="Breadcrumb">
+              {breadcrumbs.map((crumb, index) => (
+                <span key={`${crumb}-${index}`} className="breadcrumb">
+                  {crumb}
+                </span>
+              ))}
+            </nav>
+          ) : null}
+        </div>
       </div>
 
-      <div className="app-header-user">
-        <span>{displayName}</span>
-        <span className="role-badge">{getRoleLabel(user?.role)}</span>
+      <div className="app-header-actions">
+        <ThemeToggle />
       </div>
     </header>
   );

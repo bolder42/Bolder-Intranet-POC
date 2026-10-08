@@ -100,7 +100,7 @@ Zod / Hono / etc. across the workspace.
                 │   └── register/page.tsx
                 ├── app/                      # APP shell (sidebar+header)
                 │   ├── layout.tsx
-                │   ├── page.tsx              # HOME — working stub
+                │   ├── page.tsx              # HOME — Anytype-style dashboard (READ-ONLY projection)
                 │   └── projects/
                 │       ├── page.tsx          # projects list
                 │       └── [projectId]/      # PROJECT shell
@@ -127,6 +127,52 @@ Composed via Next.js `layout.tsx`, **never per-page**:
 
 - Adding a new module? Place its routes inside the correct shell. **Do not** create a fourth shell.
 - The Auth shell may never render authenticated content; the App and Project shells may never render unauthenticated content.
+
+---
+
+## 4. Theme system
+
+The web app ships a dual light/dark theme, driven entirely from CSS tokens. No
+Tailwind, no UI kit. Module owners writing pages or components MUST follow
+this contract; raw hex values are not allowed in component styles.
+
+**Tokens.** All color, radius, shadow, and shell-dimension values live in
+`apps/web/src/app/globals.css`:
+
+- `:root` defines the light tokens (`--color-canvas`, `--color-rail`,
+  `--color-surface`, `--color-surface-tint`, `--color-surface-elevated`,
+  `--color-border`, `--color-border-strong`, `--color-text-primary`,
+  `--color-text-muted`, `--color-text-subtle`, `--color-hover`, `--color-accent`,
+  `--color-accent-hover`, status colors `--color-danger`, `--color-amber`,
+  `--color-blue`, `--color-green`, plus `--sidebar-width`, `--header-height`,
+  `--toolbar-pill-height`).
+- `html[data-theme='dark']` overrides the same names for dark. Dark neutrals
+  lean purple (~275°), muted text sits at ~10% saturation.
+
+Use the tokens, not hex: `color: var(--color-text-primary);` — never
+`color: #1f1f1f;` in a component.
+
+**Switching themes.** `apps/web/src/app/layout.tsx` injects a small blocking
+inline `<script>` that runs **before first paint** and sets
+`document.documentElement.dataset.theme` based on `localStorage.theme` (one of
+`'light' | 'dark' | 'system'`, falling back to `'system'` which resolves
+against `prefers-color-scheme`). The script must stay synchronous and inline;
+a deferred script will flash the wrong palette on first paint.
+
+**Runtime toggling.** `apps/web/src/components/theme-provider.tsx` owns the
+`data-theme` attribute after hydration and exposes `useTheme()`. The
+`<ThemeToggle>` primitive (`apps/web/src/components/shell/theme-toggle.tsx`,
+mounted in the app header) is a 2-state cycle between light and dark.
+
+**Adding a token.** Add it to **both** `:root` and `html[data-theme='dark']`
+in `globals.css`. New tokens must follow the existing naming (`--color-*` for
+color, `--*-width`/`--*-height` for dimensions, `--font-*` for typography).
+Components outside `packages/ui/` import the stylesheet once at the App shell
+layout; do not re-import per-component.
+
+**Inter / typography.** `next/font/google` loads Inter in `app/layout.tsx`
+and exposes it as `--font-inter`, aliased to `--font-sans` in `globals.css`.
+Don't import Inter directly from a component.
 
 ---
 
@@ -306,3 +352,5 @@ Demo login (after seeding): `admin@bolder.local` / `admin123`.
 - **No Node-only imports in `auth.config.ts` or `middleware.ts`**. Enforced by lint.
 - **`verbatimModuleSyntax` is on** — `import type { … }` for types, `import { … }` for runtime values. Mixing them fails the typecheck.
 - **`AUTH_SECRET` is mandatory and must be persistent.** Copy `.env.local.example` to `apps/web/.env.local` and put a real `openssl rand -base64 32` value in `AUTH_SECRET`. Without it, Auth.js v5 auto-generates one on each dev-server start, the next request 500s on `/api/auth/session`, and the client throws `ClientFetchError`. **Never commit `.env.local`.**
+- **Theme tokens only — no hardcoded colors.** Every color in component CSS must be a `var(--color-*)` from `globals.css`. Hardcoded hex values break the dark theme silently and will be caught by review. If a needed token doesn't exist, add it to **both** `:root` and `html[data-theme='dark']` rather than inlining a hex.
+- **Hydrating from `localStorage` requires a `mounted` gate (or post-mount sync).** Reading storage in a `useState` initializer causes a hydration mismatch (server renders the fallback, the first client render reads storage and renders something else). `useLocalStorage` in `apps/web/src/hooks/use-local-storage.ts` initializes with the fallback and syncs in `useEffect` — use it for any persisted UI state (sidebar collapsed, theme, etc.).
