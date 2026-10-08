@@ -8,7 +8,7 @@ A prototype of a corporate intranet that brings together knowledge organization 
 
 Creation and visualization of projects. A generalist view of every project. It must display its participants and final deadline in a concise/brief way, but must also offer the option to open a detailed view of the participants.
 
-**Only participants with the Tech Lead role can modify/create projects.**
+**Only users holding the global `tech_lead` role (or admins) can modify/create projects. Tech Lead is a single global position, not a per-project role.**
 
 **Requires WRITE and READ access to the database.**
 
@@ -34,7 +34,7 @@ Shows milestones and deadlines.
 
 Always belongs to a project — it is not standalone.
 
-**Only participants with the Tech Lead role can modify the schedule.**
+**Only users holding the global `tech_lead` role (or admins) can modify the schedule.**
 
 **Requires WRITE and READ access to the database.**
 
@@ -107,8 +107,14 @@ Always belongs to a project — it is not standalone.
 
 | Module                  | Who can write                                |
 |-------------------------|----------------------------------------------|
-| Projects                | Tech Lead (project participant)               |
+| Projects                | Tech Lead (global) or Admin                   |
 | Wiki per project        | Any project participant                      |
-| Schedule per project    | Tech Lead (project participant)              |
+| Schedule per project    | Tech Lead (global) or Admin                  |
 | Task view per project   | Any project participant                      |
 | Any operation           | Admin (always allowed, even if not explicit)  |
+
+---
+
+## Base infrastructure
+
+This file describes **what** each module is. For **how** the modules are wired together — the monorepo layout, the three UI shells, the data-layer boundaries, the role guards, the Hono RPC end-to-end types — see `INFRA.md`.

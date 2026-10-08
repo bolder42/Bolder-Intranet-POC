@@ -1,5 +1,37 @@
 projeto-1-bolder-intranet.pdf
 
+# Editor / agent runtime state (sessions, cached screenshots, internal data)
+.opencode/
+
+# Env
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Turborepo
+.turbo/
+
+# Local SQLite databases and seed data
+**/data/*.db
+**/data/*.db-journal
+**/data/*.db-wal
+**/data/*.db-shm
+**/data/*.sqlite
+
+# Next.js
+.next/
+out/
+
+# Build outputs (all packages)
+dist/
+
+# Vitest coverage
+coverage/
+
+# Node
+node_modules/
+
 # Logs
 logs
 *.log

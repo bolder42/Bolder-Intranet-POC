@@ -1,0 +1,41 @@
+{
+  "name": "@bolder/web",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev --port 3000",
+    "build": "next build",
+    "start": "next start --port 3000",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "@bolder/auth": "workspace:*",
+    "@bolder/shared": "workspace:*",
+    "@bolder/ui": "workspace:*",
+    "hono": "catalog:",
+    "next": "catalog:",
+    "next-auth": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@repo/eslint-config": "workspace:*",
+    "@repo/typescript-config": "workspace:*",
+    "@repo/vitest-config": "workspace:*",
+    "@testing-library/dom": "^10.4.0",
+    "@testing-library/jest-dom": "^7.0.0",
+    "@testing-library/react": "^16.3.0",
+    "@types/node": "catalog:",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "@vitejs/plugin-react": "^6.0.0",
+    "eslint": "catalog:",
+    "jsdom": "^30.0.0",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

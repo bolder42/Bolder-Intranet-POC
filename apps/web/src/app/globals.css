@@ -1,0 +1,143 @@
+/* Anytype-inspired dual theme token system.
+   Light is the default; dark overrides live under html[data-theme="dark"]. */
+
+:root {
+  --font-sans: var(--font-inter), system-ui, -apple-system, 'Segoe UI', Roboto,
+    Helvetica, Arial, sans-serif;
+
+  /* Light mode primitives */
+  --color-canvas: #ffffff;
+  --color-rail: #f6f6f4;
+  --color-surface: #ffffff;
+  --color-surface-tint: #f0efed;
+  --color-surface-elevated: rgba(255, 255, 255, 0.9);
+  --color-border: #e4e4e1;
+  --color-border-strong: #d0d0cc;
+  --color-text-primary: #1f1f1f;
+  --color-text-muted: #8c8c8c;
+  --color-text-subtle: #b0b0ae;
+  --color-hover: rgba(0, 0, 0, 0.04);
+  --color-accent: #1f1f1f;
+  --color-accent-hover: #333333;
+  --color-danger: #e5484d;
+  --color-amber: #d99a2b;
+  --color-blue: #4a8fd9;
+  --color-green: #4cb050;
+
+  /* Backwards-compatible aliases used by older components/auth pages. */
+  --color-bg: var(--color-canvas);
+  --color-fg: var(--color-text-primary);
+  --color-fg-muted: var(--color-text-muted);
+  --color-surface-muted: var(--color-surface-tint);
+  --color-accent-strong: var(--color-accent-hover);
+
+  /* Shell dimensions */
+  --sidebar-width: 300px;
+  --header-height: 48px;
+  --toolbar-pill-height: 40px;
+}
+
+html[data-theme='dark'] {
+  /* Neutrals lean purple (~275°), ~3 steps darker; muted text at ~10% sat. */
+  --color-canvas: #151217;
+  --color-rail: #1f1a23;
+  --color-surface: #251f29;
+  --color-surface-tint: #1f1a23;
+  --color-surface-elevated: rgba(57, 48, 64, 0.92);
+  --color-border: #322a37;
+  --color-border-strong: #4c4054;
+  --color-text-primary: #ebe9ec;
+  --color-text-muted: #8c7e95;
+  --color-text-subtle: #685c70;
+  --color-hover: rgba(225, 215, 245, 0.06);
+  --color-accent: #ebe9ec;
+  --color-accent-hover: #ffffff;
+  --color-danger: #f0616d;
+  --color-amber: #e0a030;
+  --color-blue: #5b9bd5;
+  --color-green: #4cb050;
+
+  --color-bg: var(--color-canvas);
+  --color-fg: var(--color-text-primary);
+  --color-fg-muted: var(--color-text-muted);
+  --color-surface-muted: var(--color-surface-tint);
+  --color-accent-strong: var(--color-accent-hover);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  color-scheme: light;
+}
+
+html[data-theme='dark'] {
+  color-scheme: dark;
+}
+
+body {
+  min-height: 100vh;
+  background: var(--color-canvas);
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+button {
+  font-family: inherit;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  margin: 0;
+  line-height: 1.15;
+  color: var(--color-text-primary);
+}
+
+p {
+  margin: 0 0 1rem;
+}
+
+p:last-child {
+  margin-bottom: 0;
+}
+
+/* Accessible focus ring for mouse users; keep visible for keyboard. */
+:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+  border-radius: inherit;
+}
+
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
