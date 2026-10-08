@@ -1,4 +1,4 @@
-import { requireGlobalRole } from "@bolder/auth";
+import { requireGlobalRole, requireProjectMember } from "@bolder/auth";
 import type { AuthContext } from "@bolder/auth";
 import {
   ApiError,
@@ -19,8 +19,9 @@ function ensureProject(projectId: number) {
 
 /** Admins see every project; everyone else sees only their projects. */
 export function listProjects(ctx: AuthContext) {
-  if (ctx.user.role === "admin") return projectsRepo.listAll();
-  return projectsRepo.listForUser(ctx.user.id);
+  const projects =
+    ctx.user.role === "admin" ? projectsRepo.listAll() : projectsRepo.listForUser(ctx.user.id);
+  return projects.map((project) => ({ ...project, members: projectsRepo.listMembers(project.id) }));
 }
 
 export function getProject(projectId: number) {
@@ -31,34 +32,30 @@ export function getProject(projectId: number) {
 export function createProject(ctx: AuthContext, input: CreateProjectInput) {
   requireGlobalRole(ctx, ["admin", "tech_lead"]);
 
-  const project = projectsRepo.create({
-    name: input.name,
-    description: input.description ?? null,
-    createdBy: ctx.user.id,
-  });
-
-  // The creator is added as a member. There is no per-project lead role —
-  // Tech Lead is a global role (see AGENTS.md §5).
-  projectsRepo.addMember({ projectId: project.id, userId: ctx.user.id });
-
-  for (const userId of input.memberIds ?? []) {
-    if (userId === ctx.user.id) continue;
-    projectsRepo.addMember({ projectId: project.id, userId });
-  }
+  const memberIds = [...new Set([ctx.user.id, ...(input.memberIds ?? [])])];
+  const available = new Set(projectsRepo.candidates().map((user) => user.id));
+  if (memberIds.some((id) => !available.has(id)))
+    throw new ApiError(ErrorCode.VALIDATION, "Unknown participant.");
+  const project = projectsRepo.createWithMembers(
+    {
+      name: input.name,
+      description: input.description ?? null,
+      createdBy: ctx.user.id,
+      deadline: input.deadline ?? null,
+    },
+    memberIds,
+  );
 
   return project;
 }
 
 /** Updating a project requires a global Tech Lead or Admin role. */
-export function updateProject(
-  ctx: AuthContext,
-  projectId: number,
-  input: UpdateProjectInput,
-) {
+export function updateProject(ctx: AuthContext, projectId: number, input: UpdateProjectInput) {
   requireGlobalRole(ctx, ["admin", "tech_lead"]);
   ensureProject(projectId);
 
-  const patch: { name?: string; description?: string | null } = {};
+  const patch: { name?: string; description?: string | null; deadline?: number | null } = {};
+  if (input.deadline !== undefined) patch.deadline = input.deadline;
   if (input.name !== undefined) patch.name = input.name;
   if (input.description !== undefined) patch.description = input.description;
 
@@ -78,14 +75,12 @@ export function listMembers(projectId: number) {
 }
 
 /** Adding a member requires a global Tech Lead or Admin role. */
-export function addMember(
-  ctx: AuthContext,
-  projectId: number,
-  input: AddProjectMemberInput,
-) {
+export function addMember(ctx: AuthContext, projectId: number, input: AddProjectMemberInput) {
   requireGlobalRole(ctx, ["admin", "tech_lead"]);
   ensureProject(projectId);
 
+  if (!projectsRepo.candidates().some((user) => user.id === input.userId))
+    throw new ApiError(ErrorCode.VALIDATION, "Unknown participant.");
   if (projectsRepo.findMembership(projectId, input.userId)) {
     throw new ApiError(ErrorCode.CONFLICT, "User is already a project member.");
   }
@@ -97,12 +92,16 @@ export function addMember(
 }
 
 /** Removing a member requires a global Tech Lead or Admin role. */
-export function removeMember(
-  ctx: AuthContext,
-  projectId: number,
-  userId: number,
-) {
+export function removeMember(ctx: AuthContext, projectId: number, userId: number) {
   requireGlobalRole(ctx, ["admin", "tech_lead"]);
   ensureProject(projectId);
   projectsRepo.removeMember(projectId, userId);
+}
+export function requireProjectAccess(ctx: AuthContext, projectId: number) {
+  ensureProject(projectId);
+  requireProjectMember(ctx, projectId);
+}
+export function listCandidates(ctx: AuthContext) {
+  requireGlobalRole(ctx, ["tech_lead", "admin"]);
+  return projectsRepo.candidates();
 }

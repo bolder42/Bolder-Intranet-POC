@@ -8,6 +8,8 @@ A prototype of a corporate intranet that brings together knowledge organization 
 
 Creation and visualization of projects. A generalist view of every project. It must display its participants and final deadline in a concise/brief way, but must also offer the option to open a detailed view of the participants.
 
+When a project is selected, it must show a dashboard with summarized information about that project. The Overview tab is the project landing page. Tasks, Wiki, and Schedule remain within the Project shell and belong to the selected project.
+
 **Only users holding the global `tech_lead` role (or admins) can modify/create projects. Tech Lead is a single global position, not a per-project role.**
 
 **Requires WRITE and READ access to the database.**

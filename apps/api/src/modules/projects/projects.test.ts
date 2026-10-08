@@ -52,6 +52,111 @@ async function createProject(token: string, name: string) {
 }
 
 describe("projects module", () => {
+  it("persists deadlines and public participant details in list and detail", async () => {
+    const participant = await registerUser(h.app, {
+      email: "participant@bolder.local",
+      password: "password123",
+      name: "Participant",
+      role: "dev",
+    });
+    const deadline = Date.UTC(2026, 10, 6);
+    const response = await h.app.request("/api/projects", {
+      method: "POST",
+      headers: authHeaders(techToken),
+      body: JSON.stringify({
+        name: "  New project  ",
+        deadline,
+        memberIds: [participant.user.id, participant.user.id],
+      }),
+    });
+    expect(response.status).toBe(201);
+    const { project } = (await response.json()) as {
+      project: { id: number; name: string; deadline: number };
+    };
+    expect(project.name).toBe("New project");
+    expect(project.deadline).toBe(deadline);
+    const detailResponse = await h.app.request(`/api/projects/${project.id}`, {
+      headers: authHeaders(participant.token),
+    });
+    expect(detailResponse.status).toBe(200);
+    const detail = (await detailResponse.json()) as {
+      members: Array<{ user: { name: string; passwordHash?: string } }>;
+    };
+    expect(detail.members).toHaveLength(2);
+    expect(detail.members.some((member) => member.user.name === "Participant")).toBe(true);
+    expect(JSON.stringify(detail)).not.toContain("passwordHash");
+    const list = (await (
+      await h.app.request("/api/projects", { headers: authHeaders(participant.token) })
+    ).json()) as { projects: Array<{ deadline: number; members: unknown[] }> };
+    expect(list.projects[0]?.deadline).toBe(deadline);
+    expect(list.projects[0]?.members).toHaveLength(2);
+    const update = await h.app.request(`/api/projects/${project.id}`, {
+      method: "PATCH",
+      headers: authHeaders(techToken),
+      body: JSON.stringify({ deadline: null }),
+    });
+    expect(update.status).toBe(200);
+    expect(((await update.json()) as { project: { deadline: null } }).project.deadline).toBeNull();
+  });
+
+  it("denies nonmembers access to project details, members and updates", async () => {
+    const { project } = (await (await createProject(adminToken, "Private")).json()) as {
+      project: { id: number };
+    };
+    for (const token of [devToken, techToken]) {
+      for (const path of [`/api/projects/${project.id}`, `/api/projects/${project.id}/members`]) {
+        expect((await h.app.request(path, { headers: authHeaders(token) })).status).toBe(403);
+      }
+      expect(
+        (
+          await h.app.request(`/api/projects/${project.id}`, {
+            method: "PATCH",
+            headers: authHeaders(token),
+            body: JSON.stringify({ name: "Denied" }),
+          })
+        ).status,
+      ).toBe(403);
+    }
+    expect(
+      (await h.app.request(`/api/projects/${project.id}`, { headers: authHeaders(adminToken) }))
+        .status,
+    ).toBe(200);
+  });
+
+  it("restricts candidate discovery and never returns password hashes", async () => {
+    expect(
+      (await h.app.request("/api/projects/candidates", { headers: authHeaders(devToken) })).status,
+    ).toBe(403);
+    expect((await h.app.request("/api/projects/candidates")).status).toBe(401);
+    for (const token of [techToken, adminToken]) {
+      const response = await h.app.request("/api/projects/candidates", {
+        headers: authHeaders(token),
+      });
+      expect(response.status).toBe(200);
+      const data = (await response.json()) as { users: unknown[] };
+      expect(data.users).toHaveLength(3);
+      expect(JSON.stringify(data)).not.toContain("passwordHash");
+    }
+  });
+
+  it("rejects invalid creation without leaving a partial project", async () => {
+    for (const input of [
+      { name: "   " },
+      { name: "Bad", deadline: -1 },
+      { name: "Bad", memberIds: [999999] },
+    ]) {
+      const response = await h.app.request("/api/projects", {
+        method: "POST",
+        headers: authHeaders(techToken),
+        body: JSON.stringify(input),
+      });
+      expect(response.status).toBe(422);
+    }
+    const list = (await (
+      await h.app.request("/api/projects", { headers: authHeaders(adminToken) })
+    ).json()) as { projects: unknown[] };
+    expect(list.projects).toHaveLength(0);
+  });
   it("forbids a dev from creating a project", async () => {
     const res = await createProject(devToken, "Nope");
     expect(res.status).toBe(403);
@@ -72,7 +177,7 @@ describe("projects module", () => {
     const detail = (await detailRes.json()) as {
       members: Array<{ userId: number }>;
     };
-    expect(detail.members.some((m) => m.userId === undefined ? false : true)).toBe(true);
+    expect(detail.members.some((m) => (m.userId === undefined ? false : true))).toBe(true);
   });
 
   it("lets an admin create a project", async () => {
@@ -101,9 +206,9 @@ describe("projects module", () => {
   });
 
   it("lets a tech_lead update a project but not a dev", async () => {
-    const created = (await (
-      await createProject(techToken, "Apollo")
-    ).json()) as { project: { id: number } };
+    const created = (await (await createProject(techToken, "Apollo")).json()) as {
+      project: { id: number };
+    };
 
     const denied = await h.app.request(`/api/projects/${created.project.id}`, {
       method: "PATCH",
@@ -123,9 +228,9 @@ describe("projects module", () => {
   });
 
   it("restricts project deletion to admins", async () => {
-    const created = (await (
-      await createProject(techToken, "Apollo")
-    ).json()) as { project: { id: number } };
+    const created = (await (await createProject(techToken, "Apollo")).json()) as {
+      project: { id: number };
+    };
 
     const denied = await h.app.request(`/api/projects/${created.project.id}`, {
       method: "DELETE",
@@ -141,9 +246,9 @@ describe("projects module", () => {
   });
 
   it("lets a tech_lead add members and rejects duplicates", async () => {
-    const created = (await (
-      await createProject(techToken, "Apollo")
-    ).json()) as { project: { id: number } };
+    const created = (await (await createProject(techToken, "Apollo")).json()) as {
+      project: { id: number };
+    };
 
     const devUser = (await registerUser(h.app, {
       email: "second-dev@bolder.local",
@@ -152,24 +257,18 @@ describe("projects module", () => {
       role: "dev",
     })) as { user: { id: number } };
 
-    const addRes = await h.app.request(
-      `/api/projects/${created.project.id}/members`,
-      {
-        method: "POST",
-        headers: authHeaders(techToken),
-        body: JSON.stringify({ userId: devUser.user.id }),
-      },
-    );
+    const addRes = await h.app.request(`/api/projects/${created.project.id}/members`, {
+      method: "POST",
+      headers: authHeaders(techToken),
+      body: JSON.stringify({ userId: devUser.user.id }),
+    });
     expect(addRes.status).toBe(201);
 
-    const dupRes = await h.app.request(
-      `/api/projects/${created.project.id}/members`,
-      {
-        method: "POST",
-        headers: authHeaders(techToken),
-        body: JSON.stringify({ userId: devUser.user.id }),
-      },
-    );
+    const dupRes = await h.app.request(`/api/projects/${created.project.id}/members`, {
+      method: "POST",
+      headers: authHeaders(techToken),
+      body: JSON.stringify({ userId: devUser.user.id }),
+    });
     expect(dupRes.status).toBe(409);
   });
 });

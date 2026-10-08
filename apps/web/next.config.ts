@@ -8,7 +8,16 @@ import type { NextConfig } from 'next';
  */
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  distDir: process.env.BOLDER_NEXT_DIST_DIR ?? '.next',
   transpilePackages: ['@bolder/ui', '@bolder/shared', '@bolder/db', '@bolder/auth'],
+  webpack(config) {
+    // Workspace sources use Node-compatible .js specifiers for TypeScript files.
+    config.resolve.extensionAlias = {
+      ...config.resolve.extensionAlias,
+      '.js': ['.ts', '.tsx', '.js'],
+    };
+    return config;
+  },
 };
 
 export default nextConfig;

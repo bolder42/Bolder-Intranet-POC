@@ -42,7 +42,11 @@ export async function setupTestApp(): Promise<TestHarness> {
     db: mod.getDb(),
     mod,
     dir,
-    cleanup: () => rmSync(dir, { recursive: true, force: true }),
+    cleanup: () => {
+      // Windows cannot remove SQLite files while the connection is open.
+      (mod.getDb() as Db & { $client: { close(): void } }).$client.close();
+      rmSync(dir, { recursive: true, force: true });
+    },
   };
 }
 
