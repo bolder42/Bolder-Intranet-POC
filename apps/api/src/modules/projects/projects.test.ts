@@ -57,7 +57,7 @@ describe("projects module", () => {
     expect(res.status).toBe(403);
   });
 
-  it("lets a tech_lead create a project and become its lead", async () => {
+  it("lets a tech_lead create a project and is added as a member", async () => {
     const res = await createProject(techToken, "Apollo");
     expect(res.status).toBe(201);
     const body = (await res.json()) as {
@@ -70,9 +70,9 @@ describe("projects module", () => {
     });
     expect(detailRes.status).toBe(200);
     const detail = (await detailRes.json()) as {
-      members: Array<{ role: string }>;
+      members: Array<{ userId: number }>;
     };
-    expect(detail.members.some((m) => m.role === "lead")).toBe(true);
+    expect(detail.members.some((m) => m.userId === undefined ? false : true)).toBe(true);
   });
 
   it("lets an admin create a project", async () => {
@@ -100,7 +100,7 @@ describe("projects module", () => {
     expect(devList.projects).toHaveLength(0);
   });
 
-  it("lets the lead update a project but not an outsider", async () => {
+  it("lets a tech_lead update a project but not a dev", async () => {
     const created = (await (
       await createProject(techToken, "Apollo")
     ).json()) as { project: { id: number } };
@@ -140,7 +140,7 @@ describe("projects module", () => {
     expect(allowed.status).toBe(200);
   });
 
-  it("lets the lead add members and rejects duplicates", async () => {
+  it("lets a tech_lead add members and rejects duplicates", async () => {
     const created = (await (
       await createProject(techToken, "Apollo")
     ).json()) as { project: { id: number } };
@@ -157,7 +157,7 @@ describe("projects module", () => {
       {
         method: "POST",
         headers: authHeaders(techToken),
-        body: JSON.stringify({ userId: devUser.user.id, role: "member" }),
+        body: JSON.stringify({ userId: devUser.user.id }),
       },
     );
     expect(addRes.status).toBe(201);
@@ -167,7 +167,7 @@ describe("projects module", () => {
       {
         method: "POST",
         headers: authHeaders(techToken),
-        body: JSON.stringify({ userId: devUser.user.id, role: "member" }),
+        body: JSON.stringify({ userId: devUser.user.id }),
       },
     );
     expect(dupRes.status).toBe(409);

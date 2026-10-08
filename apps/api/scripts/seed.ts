@@ -99,11 +99,11 @@ const intranet = db
 
 db.insert(projectMembers)
   .values([
-    { projectId: apollo.id, userId: tech.id, role: "lead", joinedAt: now },
-    { projectId: apollo.id, userId: dev1.id, role: "member", joinedAt: now },
-    { projectId: apollo.id, userId: dev2.id, role: "member", joinedAt: now },
-    { projectId: intranet.id, userId: admin.id, role: "lead", joinedAt: now },
-    { projectId: intranet.id, userId: dev1.id, role: "member", joinedAt: now },
+    { projectId: apollo.id, userId: tech.id, joinedAt: now },
+    { projectId: apollo.id, userId: dev1.id, joinedAt: now },
+    { projectId: apollo.id, userId: dev2.id, joinedAt: now },
+    { projectId: intranet.id, userId: admin.id, joinedAt: now },
+    { projectId: intranet.id, userId: dev1.id, joinedAt: now },
   ])
   .run();
 

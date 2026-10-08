@@ -4,11 +4,9 @@ import { ApiError, ErrorCode, type Role } from "@bolder/shared";
 import type { AuthContext, SessionUser } from "./session.js";
 
 /**
- * Project-scoped role resolution.
- *
- * Global roles live on `users.role`; per-project roles live on
- * `project_members.role`. Admins bypass every check (MODULES.md: admins have
- * access to all operations even when not explicitly stated).
+ * Authorization is global (admin / tech_lead / dev). There is no per-project
+ * role — Tech Lead is a single global position, not one per project. See
+ * AGENTS.md §5 and INFRA.md §7.
  */
 
 function findMembership(projectId: number, userId: number) {
@@ -32,18 +30,6 @@ export function requireGlobalRole(ctx: AuthContext, roles: Role[]): void {
   }
 }
 
-/** Throws 403 unless the user is the project's lead or a global admin. */
-export function requireProjectLead(ctx: AuthContext, projectId: number): void {
-  if (ctx.user.role === "admin") return;
-  const membership = findMembership(projectId, ctx.user.id);
-  if (membership?.role !== "lead") {
-    throw new ApiError(
-      ErrorCode.FORBIDDEN,
-      "Only a project lead can perform this action.",
-    );
-  }
-}
-
 /** Throws 403 unless the user belongs to the project or is a global admin. */
 export function requireProjectMember(ctx: AuthContext, projectId: number): void {
   if (ctx.user.role === "admin") return;
@@ -57,11 +43,9 @@ export function requireProjectMember(ctx: AuthContext, projectId: number): void 
 }
 
 /**
- * Boolean variant used by the frontend to derive UI hints (e.g. show/hide a
- * "New project" button). Returns true when the user may modify the project:
- * global admin, or a lead of that project.
+ * Boolean variant for UI hints (show/hide a "New project" button, etc.).
+ * True when the user's global role can write to projects: tech_lead or admin.
  */
-export function canWriteProject(user: SessionUser, projectId: number): boolean {
-  if (user.role === "admin") return true;
-  return findMembership(projectId, user.id)?.role === "lead";
+export function canWriteProject(user: SessionUser): boolean {
+  return user.role === "admin" || user.role === "tech_lead";
 }

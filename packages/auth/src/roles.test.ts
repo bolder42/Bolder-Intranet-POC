@@ -12,15 +12,14 @@ import { ApiError, hasAtLeastGlobal } from "@bolder/shared";
 import {
   canWriteProject,
   requireGlobalRole,
-  requireProjectLead,
   requireProjectMember,
 } from "./roles.js";
 import type { AuthContext, SessionUser } from "./session.js";
 
 const db = getDb();
 let projectId = 0;
-let lead: SessionUser;
-let member: SessionUser;
+let tech: SessionUser;
+let dev: SessionUser;
 let outsider: SessionUser;
 let admin: SessionUser;
 
@@ -41,22 +40,22 @@ beforeAll(() => {
     })
     .returning()
     .get();
-  const leadRow = db
+  const techRow = db
     .insert(users)
     .values({
-      email: "lead@bolder.local",
+      email: "tech@bolder.local",
       passwordHash: "x",
-      name: "Lead",
-      role: "dev",
+      name: "Tech",
+      role: "tech_lead",
     })
     .returning()
     .get();
-  const memberRow = db
+  const devRow = db
     .insert(users)
     .values({
-      email: "member@bolder.local",
+      email: "dev@bolder.local",
       passwordHash: "x",
-      name: "Member",
+      name: "Dev",
       role: "dev",
     })
     .returning()
@@ -74,15 +73,15 @@ beforeAll(() => {
 
   const projectRow = db
     .insert(projects)
-    .values({ name: "Apollo", createdBy: leadRow.id })
+    .values({ name: "Apollo", createdBy: techRow.id })
     .returning()
     .get();
   projectId = projectRow.id;
 
   db.insert(projectMembers)
     .values([
-      { projectId, userId: leadRow.id, role: "lead" },
-      { projectId, userId: memberRow.id, role: "member" },
+      { projectId, userId: techRow.id },
+      { projectId, userId: devRow.id },
     ])
     .run();
 
@@ -94,8 +93,8 @@ beforeAll(() => {
   });
 
   admin = toSession(adminRow);
-  lead = toSession(leadRow);
-  member = toSession(memberRow);
+  tech = toSession(techRow);
+  dev = toSession(devRow);
   outsider = toSession(outsiderRow);
 });
 
@@ -108,7 +107,7 @@ describe("hasAtLeastGlobal (re-exported from @bolder/shared)", () => {
 
 describe("requireGlobalRole", () => {
   it("allows a listed role", () => {
-    expect(() => requireGlobalRole(ctx(lead), ["dev"])).not.toThrow();
+    expect(() => requireGlobalRole(ctx(tech), ["tech_lead"])).not.toThrow();
   });
 
   it("allows admin even when not listed", () => {
@@ -117,7 +116,7 @@ describe("requireGlobalRole", () => {
 
   it("throws FORBIDDEN for a disallowed role", () => {
     try {
-      requireGlobalRole(ctx(member), ["admin"]);
+      requireGlobalRole(ctx(dev), ["admin"]);
       throw new Error("expected to throw");
     } catch (error) {
       expect(error).toBeInstanceOf(ApiError);
@@ -126,28 +125,10 @@ describe("requireGlobalRole", () => {
   });
 });
 
-describe("requireProjectLead", () => {
-  it("allows the project lead", () => {
-    expect(() => requireProjectLead(ctx(lead), projectId)).not.toThrow();
-  });
-
-  it("allows a global admin", () => {
-    expect(() => requireProjectLead(ctx(admin), projectId)).not.toThrow();
-  });
-
-  it("rejects a regular member", () => {
-    expect(() => requireProjectLead(ctx(member), projectId)).toThrow(ApiError);
-  });
-
-  it("rejects an outsider", () => {
-    expect(() => requireProjectLead(ctx(outsider), projectId)).toThrow(ApiError);
-  });
-});
-
 describe("requireProjectMember", () => {
-  it("allows members and the lead", () => {
-    expect(() => requireProjectMember(ctx(lead), projectId)).not.toThrow();
-    expect(() => requireProjectMember(ctx(member), projectId)).not.toThrow();
+  it("allows project members", () => {
+    expect(() => requireProjectMember(ctx(tech), projectId)).not.toThrow();
+    expect(() => requireProjectMember(ctx(dev), projectId)).not.toThrow();
   });
 
   it("rejects an outsider", () => {
@@ -162,10 +143,9 @@ describe("requireProjectMember", () => {
 });
 
 describe("canWriteProject", () => {
-  it("is true for the lead and admin, false otherwise", () => {
-    expect(canWriteProject(lead, projectId)).toBe(true);
-    expect(canWriteProject(admin, projectId)).toBe(true);
-    expect(canWriteProject(member, projectId)).toBe(false);
-    expect(canWriteProject(outsider, projectId)).toBe(false);
+  it("is true for tech_lead and admin, false for dev", () => {
+    expect(canWriteProject(tech)).toBe(true);
+    expect(canWriteProject(admin)).toBe(true);
+    expect(canWriteProject(dev)).toBe(false);
   });
 });

@@ -227,8 +227,11 @@ If you add a new project-scoped table:
 
 ## 7. Roles & permissions (locked by MODULES.md + AGENTS.md §5.5)
 
-Roles are global: `dev`, `tech_lead`, `admin`. Per-project membership lives in
-`project_members` with `role_in_project = 'lead' | 'member'`. **Admin always
+Roles are global: `dev`, `tech_lead`, `admin`. **Tech Lead is a single global
+position, not a per-project role** — there is no `lead`/`member` distinction
+on `project_members`, and no per-project "project lead" concept. Project
+membership is binary: a user is either a member or not. Authorization for
+project mutations depends only on the actor's global role. **Admin always
 passes** every check.
 
 Guards (in `@bolder/auth`):
@@ -236,9 +239,8 @@ Guards (in `@bolder/auth`):
 | Guard | What it enforces |
 |---|---|
 | `requireGlobalRole(ctx, roles)` | global role; admin auto-pass |
-| `requireProjectLead(projectId, ctx)` | user is global `tech_lead`/`admin` OR is a `lead` member of that project |
-| `requireProjectMember(projectId, ctx)` | user is `admin` OR is any kind of member of that project |
-| `canWriteProject(user, projectId)` | same as `requireProjectLead` but boolean — use this for UI hints |
+| `requireProjectMember(projectId, ctx)` | user is `admin` OR is a member of that project |
+| `canWriteProject(user)` | boolean — true when the user's global role can write to projects (`tech_lead` or `admin`) |
 
 Pattern in a route handler:
 
@@ -250,6 +252,10 @@ Pattern in a route handler:
   return c.json(await tasksService.create(projectId, c.req.valid("json")), 201);
 })
 ```
+
+For project mutations (create / update / add or remove a member), use
+`requireGlobalRole(ctx, ['admin', 'tech_lead'])` — there is no per-project
+"lead" check anymore.
 
 ---
 

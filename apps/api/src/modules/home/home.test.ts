@@ -61,8 +61,8 @@ beforeEach(async () => {
   h.db
     .insert(projectMembers)
     .values([
-      { projectId: projectA.id, userId: lead.user.id, role: "lead", joinedAt: now },
-      { projectId: projectB.id, userId: admin.user.id, role: "lead", joinedAt: now },
+      { projectId: projectA.id, userId: lead.user.id, joinedAt: now },
+      { projectId: projectB.id, userId: admin.user.id, joinedAt: now },
     ])
     .run();
 
@@ -151,7 +151,7 @@ async function summary(token: string) {
 }
 
 describe("home module (read-only projection)", () => {
-  it("scopes the projection to the lead's projects", async () => {
+  it("scopes the projection to the tech_lead's projects", async () => {
     const body = await summary(leadToken);
     expect(body.projectCount).toBe(1);
     expect(body.taskCount).toBe(2);

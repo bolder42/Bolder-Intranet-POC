@@ -67,11 +67,7 @@ export const projectsRepo = {
       .get();
   },
 
-  addMember(input: {
-    projectId: number;
-    userId: number;
-    role: "lead" | "member";
-  }) {
+  addMember(input: { projectId: number; userId: number }) {
     return getDb().insert(projectMembers).values(input).returning().get();
   },
 

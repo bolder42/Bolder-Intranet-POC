@@ -1,8 +1,5 @@
 import { z } from "zod";
 
-export const ProjectMemberRoleSchema = z.enum(["lead", "member"]);
-export type ProjectMemberRole = z.infer<typeof ProjectMemberRoleSchema>;
-
 export const ProjectSchema = z.object({
   id: z.number(),
   name: z.string(),
@@ -29,13 +26,11 @@ export const ProjectMemberSchema = z.object({
   id: z.number(),
   projectId: z.number(),
   userId: z.number(),
-  role: ProjectMemberRoleSchema,
   joinedAt: z.number(),
 });
 export type ProjectMember = z.infer<typeof ProjectMemberSchema>;
 
 export const AddProjectMemberSchema = z.object({
   userId: z.number().int().positive(),
-  role: ProjectMemberRoleSchema.optional().default("member"),
 });
 export type AddProjectMemberInput = z.infer<typeof AddProjectMemberSchema>;

@@ -3,15 +3,15 @@ import {
   index,
   integer,
   sqliteTable,
-  text,
   uniqueIndex,
 } from "drizzle-orm/sqlite-core";
 import { projects } from "./projects.js";
 import { users } from "./users.js";
 
 /**
- * Membership joins a user to a project with a per-project role.
- * This is the source of truth for project-scoped authorization.
+ * Membership joins a user to a project. Authorization is global (admin /
+ * tech_lead / dev), not per-project — there is no per-project role on this
+ * table. See AGENTS.md §5 and INFRA.md §7.
  */
 export const projectMembers = sqliteTable(
   "project_members",
@@ -23,7 +23,6 @@ export const projectMembers = sqliteTable(
     userId: integer("user_id", { mode: "number" })
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
-    role: text("role", { enum: ["lead", "member"] }).notNull().default("member"),
     joinedAt: integer("joined_at", { mode: "number" })
       .notNull()
       .default(sql`(unixepoch() * 1000)`),
