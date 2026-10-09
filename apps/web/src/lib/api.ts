@@ -11,16 +11,15 @@ import type { AppType } from '../../../api/src/app';
 
 const API_ORIGIN = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
-// The backend mounts every route under `/api` via `.basePath('/api')`
-// (apps/api/src/app.ts). Hono's RPC client does NOT add the server basePath
-// to request URLs, so it must be part of the client base URL.
+// The typed RPC path already contains /api through the server's basePath.
+// Only the untyped apiFetch helper needs an explicit /api prefix.
 const API_BASE = `${API_ORIGIN}/api`;
 
 /**
- * Typed Hono RPC client. Base URL includes the backend's `/api` prefix.
+ * Typed Hono RPC client. Base URL is the origin; route properties supply /api.
  * Every call site gets full type inference end-to-end.
  */
-export const api = hc<AppType>(API_BASE, {
+export const api = hc<AppType>(API_ORIGIN, {
   init: {
     credentials: 'include',
   },

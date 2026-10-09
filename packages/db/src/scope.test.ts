@@ -12,6 +12,7 @@ CREATE TABLE projects (
   name TEXT NOT NULL,
   description TEXT,
   created_by INTEGER,
+  deadline INTEGER,
   created_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000)
 );
 CREATE TABLE tasks (
@@ -31,7 +32,9 @@ function makeDb() {
   sqlite.pragma("foreign_keys = ON");
   sqlite.exec(DDL);
   const db = drizzle(sqlite);
-  db.insert(projects).values([{ name: "P1" }, { name: "P2" }]).run();
+  db.insert(projects)
+    .values([{ name: "P1" }, { name: "P2" }])
+    .run();
   db.insert(tasks)
     .values([
       { projectId: 1, title: "a", status: "todo" },

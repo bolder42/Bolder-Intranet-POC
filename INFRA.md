@@ -286,13 +286,13 @@ component. The pattern is:
 import { hc } from "hono/client";
 import type { AppType } from "../../../api/src/app";   // TYPE-ONLY, erased at build
 
-export const api = hc<AppType>(`${process.env.NEXT_PUBLIC_API_URL}/api`);
+export const api = hc<AppType>(process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001');
 ```
 
 **Gotchas** (all observed during base infra setup):
 
 1. **`app.ts` MUST be chained**. `const app = new Hono().route(...)` makes `typeof app` lose its route types. Use `new Hono().method().method().route(...)` all the way through.
-2. **Hono's RPC client does NOT apply the server `basePath` to URLs**. The server's `.basePath('/api')` means the client base URL is `${NEXT_PUBLIC_API_URL}/api` (note the `/api` at the end).
+2. **The RPC client base URL is the origin only**, such as `http://localhost:3001`. The `api.api.<path>` properties already supply the `/api` path segment from the server's `basePath('/api')`. Adding `/api` to the base URL duplicates the prefix. The untyped `apiFetch` helper adds `/api` explicitly because its paths do not include the RPC properties.
 3. **`basePath('/api')` shows up as a top-level property on the client**. So routes look like `api.api.projects.$get()`, `api.api.home.summary.$get()`, `api.api.projects[':projectId'].$get({ param: { projectId } })`. The outer `api` is the client property name; the inner `api` is the path segment.
 4. **Path params use `[':paramName']` bracket access**, not `.paramName`.
 5. **Sub-app route types propagate through chained `.route()`** — but only when sub-apps are constructed with `Hono<AppEnv>()` (not bare `new Hono()`). Every existing sub-app uses `new Hono<AppEnv>()`.
@@ -360,3 +360,16 @@ Demo login (after seeding): `admin@bolder.local` / `admin123`.
 - **`AUTH_SECRET` is mandatory and must be persistent.** Copy `.env.local.example` to `apps/web/.env.local` and put a real `openssl rand -base64 32` value in `AUTH_SECRET`. Without it, Auth.js v5 auto-generates one on each dev-server start, the next request 500s on `/api/auth/session`, and the client throws `ClientFetchError`. **Never commit `.env.local`.**
 - **Theme tokens only — no hardcoded colors.** Every color in component CSS must be a `var(--color-*)` from `globals.css`. Hardcoded hex values break the dark theme silently and will be caught by review. If a needed token doesn't exist, add it to **both** `:root` and `html[data-theme='dark']` rather than inlining a hex.
 - **Hydrating from `localStorage` requires a `mounted` gate (or post-mount sync).** Reading storage in a `useState` initializer causes a hydration mismatch (server renders the fallback, the first client render reads storage and renders something else). `useLocalStorage` in `apps/web/src/hooks/use-local-storage.ts` initializes with the fallback and syncs in `useEffect` — use it for any persisted UI state (sidebar collapsed, theme, etc.).
+## Projects implementation contract
+
+- `/app/projects` lists projects visible to the actor, with final deadline and expandable participant details. Admin sees all projects; other users see their memberships.
+- Tech Lead and Admin can create projects and edit name, description, and final deadline. Creation includes the actor as a participant and optionally selects existing users. Project and membership inserts are atomic.
+- `/app/projects/[projectId]` is the Overview landing page. The existing Project shell owns the Overview / Tasks / Wiki / Schedule tabs; submodule owners keep their existing paths and `project_id` boundaries.
+- Overview summarizes project metadata and participants. Task, wiki, and schedule summaries remain the responsibility of their module owners; Projects does not read their tables.
+- `projects.deadline` is a nullable Unix timestamp in milliseconds representing a calendar date at UTC midnight. Existing projects remain without a deadline. Apply migrations with `pnpm --filter @bolder/api db:migrate`; reseeding is unnecessary.
+- `GET /api/projects` includes public participant details in `members`. `GET /api/projects/:projectId` and `/members` require membership or Admin. Public participant fields are id, name, email, role; password hashes are never exposed.
+- `GET /api/projects/candidates` returns public user fields for the creation selector and is restricted to Tech Lead and Admin. Shared Zod schemas validate list/detail/candidates responses in the frontend.
+- Next.js resolves workspace `.js` imports to TypeScript source through `webpack.resolve.extensionAlias`, allowing shared runtime schemas to be bundled without prebuilding packages.
+- API integration tests close their SQLite connection before deleting the temporary database directory so cleanup works on Windows.
+- For a build while the dev server is running, PowerShell can set `$env:BOLDER_NEXT_DIST_DIR='.next-build'` before `pnpm build`. Clear it with `Remove-Item Env:BOLDER_NEXT_DIST_DIR` afterward. The default remains `.next`; Turborepo includes this variable in its task cache key.
+- Project Overview exposes confirmed deletion to Admin and Tech Lead. DELETE /api/projects/:projectId enforces the global role and project membership (Admin override). Existing foreign-key cascades remove child module data and memberships; the action refreshes the App layout and returns to the project list.

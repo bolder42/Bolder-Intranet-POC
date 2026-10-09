@@ -1,17 +1,15 @@
 import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
 import type { AuthContext } from "@bolder/auth";
-import {
-  AddProjectMemberSchema,
-  CreateProjectSchema,
-  UpdateProjectSchema,
-} from "@bolder/shared";
+import { AddProjectMemberSchema, CreateProjectSchema, UpdateProjectSchema } from "@bolder/shared";
 import type { AppEnv } from "../../app.js";
 import { authMiddleware } from "../../middleware/auth.js";
 import { zodErrorHook } from "../../middleware/error.js";
 import { projectScope } from "../../middleware/projectScope.js";
 import {
   addMember,
+  listCandidates,
+  requireProjectAccess,
   createProject,
   deleteProject,
   getProject,
@@ -31,7 +29,9 @@ export const projectsRoutes = new Hono<AppEnv>()
     const project = createProject(ctx(c), c.req.valid("json"));
     return c.json({ project }, 201);
   })
+  .get("/candidates", (c) => c.json({ users: listCandidates(ctx(c)) }))
   .get("/:projectId", projectScope, (c) => {
+    requireProjectAccess(ctx(c), c.get("projectId"));
     const project = getProject(c.get("projectId"));
     return c.json({ project, members: listMembers(c.get("projectId")) });
   })
@@ -40,11 +40,8 @@ export const projectsRoutes = new Hono<AppEnv>()
     projectScope,
     zValidator("json", UpdateProjectSchema, zodErrorHook),
     (c) => {
-      const project = updateProject(
-        ctx(c),
-        c.get("projectId"),
-        c.req.valid("json"),
-      );
+      requireProjectAccess(ctx(c), c.get("projectId"));
+      const project = updateProject(ctx(c), c.get("projectId"), c.req.valid("json"));
       return c.json({ project });
     },
   )
@@ -53,6 +50,7 @@ export const projectsRoutes = new Hono<AppEnv>()
     return c.json({ ok: true });
   })
   .get("/:projectId/members", projectScope, (c) => {
+    requireProjectAccess(ctx(c), c.get("projectId"));
     return c.json({ members: listMembers(c.get("projectId")) });
   })
   .post(
@@ -60,11 +58,8 @@ export const projectsRoutes = new Hono<AppEnv>()
     projectScope,
     zValidator("json", AddProjectMemberSchema, zodErrorHook),
     (c) => {
-      const member = addMember(
-        ctx(c),
-        c.get("projectId"),
-        c.req.valid("json"),
-      );
+      requireProjectAccess(ctx(c), c.get("projectId"));
+      const member = addMember(ctx(c), c.get("projectId"), c.req.valid("json"));
       return c.json({ member }, 201);
     },
   );

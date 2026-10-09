@@ -1,7 +1,8 @@
-import type { ReactNode } from 'react';
+import type { ReactNode } from "react";
+import { api, getAuthHeaders } from "@/lib/api";
 
-import { ProjectHeader } from '@/components/shell/project-header';
-import { ProjectNav } from '@/components/shell/project-nav';
+import { ProjectHeader } from "@/components/shell/project-header";
+import { ProjectNav } from "@/components/shell/project-nav";
 
 export interface ProjectLayoutProps {
   children: ReactNode;
@@ -17,6 +18,16 @@ export interface ProjectLayoutProps {
  */
 export default async function ProjectLayout({ children, params }: ProjectLayoutProps) {
   const { projectId } = await params;
+  try {
+    const headers = await getAuthHeaders();
+    const response = await api.api.projects[":projectId"].$get(
+      { param: { projectId } },
+      { headers },
+    );
+    if (!response.ok) return <p role="alert">Project unavailable or access denied.</p>;
+  } catch {
+    return <p role="alert">Unable to load this project. Check the API connection.</p>;
+  }
 
   return (
     <section className="project-shell">
