@@ -98,6 +98,10 @@ function snapshotByCwd() {
 const child = spawn('turbo', ['run', 'dev'], {
   stdio: 'inherit',
   detached: supportsProc,
+  // On Windows the pnpm bin shim is `turbo.cmd`, and Node's spawn does
+  // not resolve `.cmd` shims without a shell. `shell: true` lets cmd.exe
+  // find `turbo` on PATH (pnpm puts node_modules/.bin there for scripts).
+  shell: process.platform === 'win32',
 });
 
 // Only poll on platforms that can answer. Avoids the ENOENT loop that
