@@ -52,6 +52,45 @@ async function createProject(token: string, name: string) {
 }
 
 describe("projects module", () => {
+  it("allows a member Tech Lead to delete with cascade and denies a nonmember Tech Lead", async () => {
+    const created = (await (await createProject(techToken, "Delete me")).json()) as {
+      project: { id: number };
+    };
+    const other = await registerUser(h.app, {
+      email: "other-tech@bolder.local",
+      password: "password123",
+      name: "Other",
+      role: "tech_lead",
+    });
+    const path = `/api/projects/${created.project.id}`;
+    expect(
+      (await h.app.request(path, { method: "DELETE", headers: authHeaders(other.token) })).status,
+    ).toBe(403);
+    const { tasks, wikiPages, scheduleItems, projectMembers } = h.mod;
+    h.db.insert(tasks).values({ projectId: created.project.id, title: "Task" }).run();
+    h.db
+      .insert(wikiPages)
+      .values({ projectId: created.project.id, title: "Wiki", content: "Content" })
+      .run();
+    h.db
+      .insert(scheduleItems)
+      .values({
+        projectId: created.project.id,
+        title: "Milestone",
+        kind: "milestone",
+        dueAt: Date.now(),
+      })
+      .run();
+    expect(
+      (await h.app.request(path, { method: "DELETE", headers: authHeaders(techToken) })).status,
+    ).toBe(200);
+    for (const table of [tasks, wikiPages, scheduleItems, projectMembers])
+      expect(h.db.select().from(table).all()).toHaveLength(0);
+    expect((await h.app.request(path, { headers: authHeaders(adminToken) })).status).toBe(404);
+    expect(
+      (await h.app.request(path, { method: "DELETE", headers: authHeaders(adminToken) })).status,
+    ).toBe(404);
+  });
   it("persists deadlines and public participant details in list and detail", async () => {
     const participant = await registerUser(h.app, {
       email: "participant@bolder.local",
@@ -227,14 +266,14 @@ describe("projects module", () => {
     expect(updated.project.name).toBe("Apollo v2");
   });
 
-  it("restricts project deletion to admins", async () => {
+  it("denies Dev deletion and lets Admin delete any project", async () => {
     const created = (await (await createProject(techToken, "Apollo")).json()) as {
       project: { id: number };
     };
 
     const denied = await h.app.request(`/api/projects/${created.project.id}`, {
       method: "DELETE",
-      headers: authHeaders(techToken),
+      headers: authHeaders(devToken),
     });
     expect(denied.status).toBe(403);
 

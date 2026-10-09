@@ -38,3 +38,28 @@ export async function saveProject(_previous: string, form: FormData): Promise<st
   revalidatePath("/app/projects", "layout");
   redirect(`/app/projects/${destination}`);
 }
+
+export async function deleteProjectAction(_previous: string, form: FormData): Promise<string> {
+  const session = await auth();
+  if (!session?.user || !["tech_lead", "admin"].includes(session.user.role))
+    return "You cannot delete projects.";
+  const projectId = String(form.get("projectId") ?? "");
+  if (
+    !/^\d+$/.test(projectId) ||
+    !Number.isSafeInteger(Number(projectId)) ||
+    Number(projectId) <= 0
+  )
+    return "Invalid project.";
+  try {
+    const headers = await getAuthHeaders();
+    const response = await api.api.projects[":projectId"].$delete(
+      { param: { projectId } },
+      { headers },
+    );
+    if (!response.ok) return "Unable to delete the project. Check your permissions and try again.";
+  } catch {
+    return "Unable to reach the API. Please try again.";
+  }
+  revalidatePath("/app", "layout");
+  redirect("/app/projects");
+}

@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { Card, CardBody, CardHeader } from "@/components/ui";
 import { ProjectForm } from "@/components/projects/project-form";
 import { Participants } from "@/components/projects/participants";
+import { DeleteProject } from "@/components/projects/delete-project";
 import { api, getAuthHeaders } from "@/lib/api";
 export interface ProjectPageProps {
   params: Promise<{ projectId: string }>;
@@ -64,10 +65,13 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
           ))}
         </div>
         {session?.user.role === "tech_lead" || session?.user.role === "admin" ? (
-          <details>
-            <summary>Edit project</summary>
-            <ProjectForm project={project} />
-          </details>
+          <>
+            <details>
+              <summary>Edit project</summary>
+              <ProjectForm project={project} />
+            </details>
+            <DeleteProject projectId={project.id} projectName={project.name} />
+          </>
         ) : null}
       </section>
     );

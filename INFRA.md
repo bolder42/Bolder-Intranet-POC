@@ -372,3 +372,4 @@ Demo login (after seeding): `admin@bolder.local` / `admin123`.
 - Next.js resolves workspace `.js` imports to TypeScript source through `webpack.resolve.extensionAlias`, allowing shared runtime schemas to be bundled without prebuilding packages.
 - API integration tests close their SQLite connection before deleting the temporary database directory so cleanup works on Windows.
 - For a build while the dev server is running, PowerShell can set `$env:BOLDER_NEXT_DIST_DIR='.next-build'` before `pnpm build`. Clear it with `Remove-Item Env:BOLDER_NEXT_DIST_DIR` afterward. The default remains `.next`; Turborepo includes this variable in its task cache key.
+- Project Overview exposes confirmed deletion to Admin and Tech Lead. DELETE /api/projects/:projectId enforces the global role and project membership (Admin override). Existing foreign-key cascades remove child module data and memberships; the action refreshes the App layout and returns to the project list.

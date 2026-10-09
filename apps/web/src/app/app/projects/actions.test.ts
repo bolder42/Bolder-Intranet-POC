@@ -3,17 +3,22 @@ const mocks = vi.hoisted(() => ({
   auth: vi.fn(),
   post: vi.fn(),
   patch: vi.fn(),
+  delete: vi.fn(),
   redirect: vi.fn(),
   revalidate: vi.fn(),
 }));
 vi.mock("@/auth", () => ({ auth: mocks.auth }));
 vi.mock("@/lib/api", () => ({
   getAuthHeaders: async () => ({ authorization: "Bearer test" }),
-  api: { api: { projects: { $post: mocks.post, ":projectId": { $patch: mocks.patch } } } },
+  api: {
+    api: {
+      projects: { $post: mocks.post, ":projectId": { $patch: mocks.patch, $delete: mocks.delete } },
+    },
+  },
 }));
 vi.mock("next/navigation", () => ({ redirect: mocks.redirect }));
 vi.mock("next/cache", () => ({ revalidatePath: mocks.revalidate }));
-import { saveProject } from "./actions";
+import { saveProject, deleteProjectAction } from "./actions";
 beforeEach(() => {
   vi.clearAllMocks();
 });
@@ -24,6 +29,32 @@ function form() {
   data.append("memberIds", "2");
   return data;
 }
+it("denies Dev deletion before calling the API", async () => {
+  mocks.auth.mockResolvedValue({ user: { role: "dev" } });
+  expect(await deleteProjectAction("", form())).toContain("cannot");
+  expect(mocks.delete).not.toHaveBeenCalled();
+});
+it.each(["admin", "tech_lead"])("deletes and returns %s to the project list", async (role) => {
+  mocks.auth.mockResolvedValue({ user: { role } });
+  mocks.delete.mockResolvedValue({ ok: true });
+  const data = form();
+  data.set("projectId", "4");
+  await deleteProjectAction("", data);
+  expect(mocks.delete).toHaveBeenCalledWith(
+    { param: { projectId: "4" } },
+    { headers: { authorization: "Bearer test" } },
+  );
+  expect(mocks.revalidate).toHaveBeenCalledWith("/app", "layout");
+  expect(mocks.redirect).toHaveBeenCalledWith("/app/projects");
+});
+it("does not redirect when deletion fails", async () => {
+  mocks.auth.mockResolvedValue({ user: { role: "admin" } });
+  mocks.delete.mockResolvedValue({ ok: false });
+  const data = form();
+  data.set("projectId", "4");
+  expect(await deleteProjectAction("", data)).toContain("Unable to delete");
+  expect(mocks.redirect).not.toHaveBeenCalled();
+});
 it("denies Dev mutations before contacting the API", async () => {
   mocks.auth.mockResolvedValue({ user: { role: "dev" } });
   expect(await saveProject("", form())).toContain("cannot");

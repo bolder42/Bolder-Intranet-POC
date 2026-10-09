@@ -12,6 +12,8 @@ When a project is selected, it must show a dashboard with summarized information
 
 **Only users holding the global `tech_lead` role (or admins) can modify/create projects. Tech Lead is a single global position, not a per-project role.**
 
+Project deletion is available to Admin and Tech Lead. Tech Leads MUST be participants of the project; Admins may delete any project. Deletion permanently removes the project's Tasks, Wiki pages, Schedule items, and memberships.
+
 **Requires WRITE and READ access to the database.**
 
 ---

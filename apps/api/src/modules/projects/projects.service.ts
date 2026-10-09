@@ -62,10 +62,11 @@ export function updateProject(ctx: AuthContext, projectId: number, input: Update
   return projectsRepo.update(projectId, patch);
 }
 
-/** Deleting a project is admin-only. */
+/** Admins may delete any project; Tech Leads must belong to the project. */
 export function deleteProject(ctx: AuthContext, projectId: number) {
-  requireGlobalRole(ctx, ["admin"]);
+  requireGlobalRole(ctx, ["admin", "tech_lead"]);
   ensureProject(projectId);
+  requireProjectMember(ctx, projectId);
   projectsRepo.delete(projectId);
 }
 
