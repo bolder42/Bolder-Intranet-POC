@@ -14,11 +14,23 @@ set -u
 PORTS=(3000 3001)
 REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 
-# 1) Kill anything listening on the dev ports. `fuser -k -TERM` sends SIGTERM
-#    (graceful) before escalating; suppressing stderr so the script stays
-#    quiet when nothing is holding the port.
+# 1) Kill anything listening on the dev ports. Prefer `fuser` (psmisc, common
+#    on Debian/Ubuntu) and fall back to `lsof` (preinstalled on macOS and
+#    most Fedora/Arch) so the recovery command is useful on minimal
+#    installs that lack psmisc. SIGTERM is graceful; the rest of the
+#    script's CWD walk (and the dev-runner's own escalation) handle
+#    anything that ignores it.
 for port in "${PORTS[@]}"; do
-  fuser -k -TERM "${port}/tcp" 2>/dev/null || true
+  if command -v fuser >/dev/null 2>&1; then
+    fuser -k -TERM "${port}/tcp" 2>/dev/null || true
+  elif command -v lsof >/dev/null 2>&1; then
+    pids="$(lsof -ti ":${port}" 2>/dev/null || true)"
+    for pid in $pids; do
+      kill -TERM "$pid" 2>/dev/null || true
+    done
+  fi
+  # If neither tool is available, the /proc CWD walk below still catches
+  # any tsx/next/turbo processes spawned from inside this repo.
 done
 
 # 2) Walk any remaining node/tsx/next processes whose CWD is inside this

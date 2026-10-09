@@ -23,6 +23,14 @@
  *   we send SIGTERM to every tracked PID. SIGKILL escalation after a
  *   5-second grace period catches anything that ignored SIGTERM.
  *
+ * Cross-platform note:
+ *   /proc is Linux-only. On macOS/Windows we skip the CWD tracking
+ *   and run turbo in the foreground (no `detached: true`), so the OS
+ *   delivers Ctrl+C and SIGHUP to the whole foreground process group
+ *   and reaping happens naturally. We still keep the wrapper so the
+ *   rest of the contract — single `pnpm dev` entry, child propagation
+ *   to the ports-clean recovery path — stays the same.
+ *
  * Limitation (be honest):
  *   Pure Node can't observe its parent's death (that needs a Linux
  *   prctl(PR_SET_PDEATHSIG) call — what dumb-init does). If this wrapper
@@ -39,10 +47,37 @@ const tracked = new Set();
 let shuttingDown = false;
 
 /**
+ * /proc is Linux-only. Detect once at startup so the rest of the
+ * script can branch on it without repeatedly catching the same error.
+ * - Linux:   CWD tracking + detached child + process-group kill. Best
+ *            cleanup when the wrapper is reparented / its parent dies.
+ * - macOS / Windows: no /proc, no CWD tracking. Run turbo in the
+ *            foreground so the OS signal delivery does the work. The
+ *            wrapper is effectively a thin signal-aware passthrough.
+ */
+const supportsProc = (() => {
+  if (process.platform === 'win32') return false;
+  try {
+    readdirSync('/proc');
+    return true;
+  } catch {
+    return false;
+  }
+})();
+
+if (!supportsProc) {
+  process.stderr.write(
+    '[dev-runner] /proc unavailable; running turbo in the foreground.\n',
+  );
+}
+
+/**
  * Walk /proc and add every PID whose CWD is inside `repoRoot` to
- * `tracked`. Returns nothing — mutates the Set.
+ * `tracked`. No-op when /proc isn't available. Returns nothing —
+ * mutates the Set.
  */
 function snapshotByCwd() {
+  if (!supportsProc) return;
   const names = readdirSync('/proc');
   for (const name of names) {
     if (!/^\d+$/.test(name)) continue;
@@ -62,39 +97,47 @@ function snapshotByCwd() {
 
 const child = spawn('turbo', ['run', 'dev'], {
   stdio: 'inherit',
-  detached: true,
+  detached: supportsProc,
 });
 
-const poll = setInterval(snapshotByCwd, POLL_MS);
+// Only poll on platforms that can answer. Avoids the ENOENT loop that
+// would otherwise crash the timer callback on macOS/Windows.
+const poll = supportsProc ? setInterval(snapshotByCwd, POLL_MS) : null;
 
 function killTracked(signal) {
   if (shuttingDown) return;
   shuttingDown = true;
-  clearInterval(poll);
-  // Final snapshot so we don't miss anything that just appeared.
-  snapshotByCwd();
-  process.stderr.write(
-    `[dev-runner] ${signal}: tracked ${tracked.size} PIDs\n`,
-  );
-  for (const pid of tracked) {
-    try {
-      process.kill(pid, signal);
-    } catch {
-      // already gone or not ours
+  if (poll) clearInterval(poll);
+  if (supportsProc) {
+    // Final snapshot so we don't miss anything that just appeared.
+    snapshotByCwd();
+    process.stderr.write(
+      `[dev-runner] ${signal}: tracked ${tracked.size} PIDs\n`,
+    );
+    for (const pid of tracked) {
+      try {
+        process.kill(pid, signal);
+      } catch {
+        // already gone or not ours
+      }
     }
   }
-  // Belt-and-braces: also signal turbo's own group.
+  // Belt-and-braces: also signal turbo's own group (no-op when the
+  // child isn't a group leader, but the try/catch keeps it safe).
   try {
     process.kill(-child.pid, signal);
   } catch {}
   // Escalate to SIGKILL after 5s for anything that ignored SIGTERM.
-  setTimeout(() => {
-    for (const pid of tracked) {
-      try {
-        process.kill(pid, 'SIGKILL');
-      } catch {}
-    }
-  }, 5000);
+  // Only meaningful on Linux; on other platforms tracked is empty.
+  if (supportsProc) {
+    setTimeout(() => {
+      for (const pid of tracked) {
+        try {
+          process.kill(pid, 'SIGKILL');
+        } catch {}
+      }
+    }, 5000);
+  }
 }
 
 for (const sig of ['SIGINT', 'SIGTERM', 'SIGHUP']) {

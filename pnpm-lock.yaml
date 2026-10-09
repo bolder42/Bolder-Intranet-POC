@@ -449,6 +449,9 @@ importers:
       '@types/node':
         specifier: 'catalog:'
         version: 22.20.5
+      dotenv:
+        specifier: 'catalog:'
+        version: 16.6.1
       drizzle-kit:
         specifier: 'catalog:'
         version: 0.31.11
