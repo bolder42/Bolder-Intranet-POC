@@ -4,10 +4,24 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": [
+        "./src/*"
+      ]
     },
-    "types": ["node", "vitest/globals", "@testing-library/jest-dom"]
+    "types": [
+      "node",
+      "vitest/globals",
+      "@testing-library/jest-dom"
+    ]
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules"]
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    "next-env.d.ts",
+    ".next-build/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
 }

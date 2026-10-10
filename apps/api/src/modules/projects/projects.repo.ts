@@ -3,6 +3,7 @@ import {
   getDb,
   projectMembers,
   projects,
+  users,
   scopedByProject,
   type NewProject,
 } from "@bolder/db";
@@ -14,6 +15,20 @@ import {
  * `project_id` themselves — `scopedByProject` does not apply here.
  */
 export const projectsRepo = {
+  candidates() {
+    return getDb()
+      .select({ id: users.id, name: users.name, email: users.email, role: users.role })
+      .from(users)
+      .all();
+  },
+  createWithMembers(input: NewProject, memberIds: number[]) {
+    return getDb().transaction(() => {
+      const project = getDb().insert(projects).values(input).returning().get();
+      for (const userId of memberIds)
+        getDb().insert(projectMembers).values({ projectId: project.id, userId }).run();
+      return project;
+    });
+  },
   listAll() {
     return getDb().select().from(projects).all();
   },
@@ -37,12 +52,7 @@ export const projectsRepo = {
   },
 
   update(id: number, input: Partial<NewProject>) {
-    return getDb()
-      .update(projects)
-      .set(input)
-      .where(eq(projects.id, id))
-      .returning()
-      .get();
+    return getDb().update(projects).set(input).where(eq(projects.id, id)).returning().get();
   },
 
   delete(id: number) {
@@ -51,8 +61,15 @@ export const projectsRepo = {
 
   listMembers(projectId: number) {
     return getDb()
-      .select()
+      .select({
+        id: projectMembers.id,
+        projectId: projectMembers.projectId,
+        userId: projectMembers.userId,
+        joinedAt: projectMembers.joinedAt,
+        user: { id: users.id, name: users.name, email: users.email, role: users.role },
+      })
       .from(projectMembers)
+      .innerJoin(users, eq(users.id, projectMembers.userId))
       .where(scopedByProject(projectMembers, projectId))
       .all();
   },
@@ -61,9 +78,7 @@ export const projectsRepo = {
     return getDb()
       .select()
       .from(projectMembers)
-      .where(
-        scopedByProject(projectMembers, projectId, eq(projectMembers.userId, userId)),
-      )
+      .where(scopedByProject(projectMembers, projectId, eq(projectMembers.userId, userId)))
       .get();
   },
 
@@ -74,9 +89,7 @@ export const projectsRepo = {
   removeMember(projectId: number, userId: number) {
     return getDb()
       .delete(projectMembers)
-      .where(
-        scopedByProject(projectMembers, projectId, eq(projectMembers.userId, userId)),
-      )
+      .where(scopedByProject(projectMembers, projectId, eq(projectMembers.userId, userId)))
       .run();
   },
 };

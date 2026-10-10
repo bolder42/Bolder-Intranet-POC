@@ -21,6 +21,7 @@ projeto-1-bolder-intranet.pdf
 
 # Next.js
 .next/
+.next-build/
 out/
 
 # Build outputs (all packages)

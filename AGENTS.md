@@ -39,6 +39,7 @@ When in doubt about whether a translation preserves the spec faithfully, prefer 
 - For any new feature or refactor, the agent MUST (1) add tests covering the new or changed behavior, and (2) run the **full monorepo test suite** to confirm all tests pass.
 - Pure documentation or config-only changes (e.g., updating `.md`, dependency version bumps, `tsconfig` tweaks) are exempt from the test requirement.
 - Every workspace package (`apps/*`, `packages/*`, `tooling/*`) MUST declare `test`, `lint`, `typecheck`, and `build` scripts in its `package.json`. Turborepo silently skips packages that are missing a given task, so a new package without a `test` script would let untested code into the codebase unnoticed. When adding a new package, verify it shows up in `turbo run test` output from the repo root.
+- **Auth.js test setup.** `apps/web/src/auth.config.ts` reads `process.env.AUTH_SECRET` at module load and throws if it is undefined. Any test that transitively imports `auth.config.ts` or `auth.ts` (directly or via a component) MUST set `process.env.AUTH_SECRET` before that import runs — either in a vitest `setupFiles` entry that executes before test-file evaluation, or in a `beforeAll` placed before the import in the test body. The current full suite passes only because no test currently imports the auth modules; the moment one does, this guard fires at collection time.
 
 **Failure policy: branch vs. merge.**
 

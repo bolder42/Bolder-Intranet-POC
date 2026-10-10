@@ -1,6 +1,6 @@
-import Link from 'next/link';
+import Link from "next/link";
 
-import { api } from '@/lib/api';
+import { api, getAuthHeaders } from "@/lib/api";
 
 export interface ProjectHeaderProps {
   projectId: string;
@@ -14,7 +14,11 @@ export async function ProjectHeader({ projectId }: ProjectHeaderProps) {
   let name = `Project ${projectId}`;
 
   try {
-    const response = await api.api.projects[':projectId'].$get({ param: { projectId } });
+    const headers = await getAuthHeaders();
+    const response = await api.api.projects[":projectId"].$get(
+      { param: { projectId } },
+      { headers },
+    );
     if (response.ok) {
       const data = (await response.json()) as unknown as {
         project: { name: string } | null;

@@ -61,6 +61,7 @@ const MOCK_PROJECTS: Project[] = [
     name: 'Bolder Intranet',
     description: 'Company intranet POC.',
     createdBy: null,
+    deadline: null,
     createdAt: Date.now(),
   },
   {
@@ -68,6 +69,7 @@ const MOCK_PROJECTS: Project[] = [
     name: 'Website Refresh',
     description: 'Marketing site refresh.',
     createdBy: null,
+    deadline: null,
     createdAt: Date.now(),
   },
 ];
