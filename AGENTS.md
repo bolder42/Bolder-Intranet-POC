@@ -134,3 +134,13 @@ Key invariants the infrastructure enforces (see `INFRA.md` for full detail):
 - `auth.config.ts` and `middleware.ts` run on the Edge runtime — Node-only imports are ESLint-forbidden.
 - Frontend call sites use `api.api.<path>` because the server's `basePath('/api')` becomes a top-level client property.
 - Every workspace package MUST declare `test`, `lint`, `typecheck`, and `build` scripts (see §2 above).
+
+---
+
+## 8. Pull request workflow
+
+This repository uses a GitFlow-style layout: `develop` is the integration branch and `main` is the release branch. The rules below are the direct consequence of that, and they exist because accidental merges to `main` have already happened in this repo.
+
+- **Default PR target is `develop`, never `main`.** All PRs opened by an agent — features, fixes, refactors, chore PRs — MUST target `develop` by default.
+- **A PR to `main` requires an explicit, unambiguous request AND a confirmation step before the agent opens it.** "Merge it", "open the PR", or any other phrasing that could be read as targeting `main` (especially when the agent is currently on `main` or the only plausible base appears to be `main`) is NOT sufficient. The agent MUST pause and ask the user to explicitly confirm the target branch and that `main` is the intended destination, citing this rule, before opening the PR. No inference, no best-guess.
+- **`main` is updated only via a release PR from `develop`.** Do not merge a feature branch, a `fix/*` branch, or any other branch into `main` directly, even if the user is already on `main` and says "merge it" — confirm first.
