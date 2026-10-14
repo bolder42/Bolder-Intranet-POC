@@ -21,6 +21,7 @@ CREATE TABLE tasks (
   title TEXT NOT NULL,
   description TEXT,
   status TEXT NOT NULL DEFAULT 'todo',
+  priority TEXT NOT NULL DEFAULT 'medium',
   assignee_id INTEGER,
   due_at INTEGER,
   created_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000)
