@@ -78,7 +78,7 @@ Zod / Hono / etc. across the workspace.
     │   │   │   ├── home/        # READ-ONLY projection
     │   │   │   ├── tasks/       # STUB — module owner implements
     │   │   │   ├── wiki/        # STUB
-    │   │   │   └── schedule/    # STUB
+    │   │   │   └── schedule/    # routes + service + repo + test
     │   │   └── db/              # thin re-exports of @bolder/db
     │   ├── drizzle.config.ts
     │   ├── data/                # gitignored SQLite file lives here
@@ -108,7 +108,7 @@ Zod / Hono / etc. across the workspace.
                 │           ├── page.tsx
                 │           ├── tasks/page.tsx     # TODO
                 │           ├── wiki/page.tsx      # TODO
-                │           └── schedule/page.tsx  # TODO
+                │           └── schedule/page.tsx  # calendar + list views
 ```
 
 ---
@@ -373,3 +373,12 @@ Demo login (after seeding): `admin@bolder.local` / `admin123`.
 - API integration tests close their SQLite connection before deleting the temporary database directory so cleanup works on Windows.
 - For a build while the dev server is running, PowerShell can set `$env:BOLDER_NEXT_DIST_DIR='.next-build'` before `pnpm build`. Clear it with `Remove-Item Env:BOLDER_NEXT_DIST_DIR` afterward. The default remains `.next`; Turborepo includes this variable in its task cache key.
 - Project Overview exposes confirmed deletion to Admin and Tech Lead. DELETE /api/projects/:projectId enforces the global role and project membership (Admin override). Existing foreign-key cascades remove child module data and memberships; the action refreshes the App layout and returns to the project list.
+
+## Schedule implementation contract
+
+- `/app/projects/[projectId]/schedule` shows the project's own final deadline (`projects.deadline`, read-only banner) composed from the Projects endpoint — the Schedule module never reads the `projects` table. Below it: a hand-rolled monthly calendar (no calendar dependency) and a grouped list (Overdue / Upcoming / Past).
+- Schedule entries are `schedule_items` rows (`kind` is `milestone` or `deadline`). The table already existed in migration `0000`; implementing the module required no new migration.
+- `dueAt` is a Unix timestamp in milliseconds representing a UTC calendar date. The create/edit form writes `Date.parse(\`${date}T00:00:00Z\`)`; the calendar and list render dates with `timeZone: "UTC"`. The server passes a `today` (`yyyy-mm-dd`) key into the client view so SSR and hydration agree.
+- Endpoints: `GET`/`POST /api/schedule/:projectId` and `PATCH`/`DELETE /api/schedule/:projectId/:itemId`. Reads require project membership (Admin override); writes require the global Tech Lead or Admin role. Items are resolved with `scopedByProject`, so an item from another project returns 404.
+- The frontend reaches these through `api.api.schedule[":projectId"]` and `api.api.schedule[":projectId"][":itemId"]`; shared Zod schemas (`Create`/`Update`/`ScheduleListSchema`) validate payloads and responses.
+- The write UI (New item, Edit, Delete, click-a-day-to-create) is only rendered for Tech Lead and Admin; the API enforces the same rule regardless of what the UI shows.
