@@ -2,7 +2,12 @@ import { describe, expect, it } from "vitest";
 import { LoginSchema, RegisterSchema, UserPublicSchema } from "./auth.js";
 import { HomeSummarySchema } from "./home.js";
 import { CreateProjectSchema, UpdateProjectSchema } from "./projects.js";
-import { CreateTaskSchema } from "./tasks.js";
+import {
+  CreateTaskSchema,
+  MoveTaskSchema,
+  TaskStatusSchema,
+  UpdateTaskSchema,
+} from "./tasks.js";
 
 describe("auth schemas", () => {
   it("validates a login payload", () => {
@@ -41,6 +46,39 @@ describe("project schemas", () => {
 describe("task schemas", () => {
   it("defaults status to todo", () => {
     expect(CreateTaskSchema.parse({ title: "ship it" }).status).toBe("todo");
+  });
+
+  it("defaults priority to medium", () => {
+    expect(CreateTaskSchema.parse({ title: "ship it" }).priority).toBe("medium");
+  });
+
+  it("accepts explicit priorities", () => {
+    expect(CreateTaskSchema.parse({ title: "ship it", priority: "low" }).priority).toBe("low");
+    expect(CreateTaskSchema.parse({ title: "ship it", priority: "high" }).priority).toBe("high");
+  });
+
+  it("rejects an unknown priority", () => {
+    expect(
+      CreateTaskSchema.safeParse({ title: "ship it", priority: "urgent" }).success,
+    ).toBe(false);
+  });
+
+  it("accepts backlog as a status", () => {
+    expect(TaskStatusSchema.parse("backlog")).toBe("backlog");
+  });
+
+  it("rejects an unknown status", () => {
+    expect(TaskStatusSchema.safeParse("blocked").success).toBe(false);
+  });
+
+  it("allows priority as a partial update but leaves it undefined when omitted", () => {
+    const withPriority = UpdateTaskSchema.parse({ priority: "high" });
+    expect(withPriority.priority).toBe("high");
+    expect(UpdateTaskSchema.parse({}).priority).toBeUndefined();
+  });
+
+  it("accepts backlog as a move target", () => {
+    expect(MoveTaskSchema.parse({ status: "backlog" }).status).toBe("backlog");
   });
 });
 
