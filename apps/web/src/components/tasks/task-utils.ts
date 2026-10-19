@@ -22,6 +22,35 @@ export const PRIORITY_LABELS: Record<TaskPriority, string> = {
   high: "High",
 };
 
+/** Display labels for the board stages, keyed by status. */
+export const STATUS_LABELS: Record<TaskStatus, string> = {
+  backlog: "Backlog",
+  todo: "To Do",
+  doing: "Doing",
+  done: "Done",
+};
+
+/**
+ * The per-project creation ordinal of every task: the first task ever
+ * created in a project is #1, the second one #2, and so on.
+ *
+ * The global `tasks.id` counts every task of every project, so it is not the
+ * number a user expects to see on a board. Ids grow with the insert order,
+ * so sorting a project's tasks by id reproduces its creation order.
+ */
+export function projectTaskNumbers(tasks: TaskListItem[]): Map<number, number> {
+  const numbers = new Map<number, number>();
+  for (const task of [...tasks].sort((a, b) => a.id - b.id)) {
+    numbers.set(task.id, numbers.size + 1);
+  }
+  return numbers;
+}
+
+/** The creation ordinal of one task inside its project (0 when unknown). */
+export function taskOrdinal(numbers: Map<number, number>, taskId: number): number {
+  return numbers.get(taskId) ?? 0;
+}
+
 export function groupByStatus(tasks: TaskListItem[]): Record<TaskStatus, TaskListItem[]> {
   const groups: Record<TaskStatus, TaskListItem[]> = { backlog: [], todo: [], doing: [], done: [] };
   for (const task of tasks) {
@@ -66,6 +95,11 @@ export function dueTone(dueAt: number | null): DueTone {
 /** Due dates are shown in pt-BR day/month/year form. */
 export function formatDueDate(dueAt: number): string {
   return new Date(dueAt).toLocaleDateString("pt-BR", { timeZone: "UTC" });
+}
+
+/** The creation date uses the same day/month/year convention as due dates. */
+export function formatCreatedAt(createdAt: number): string {
+  return new Date(createdAt).toLocaleDateString("pt-BR", { timeZone: "UTC" });
 }
 
 /** `<input type="date">` value (yyyy-mm-dd) for a stored timestamp. */

@@ -34,17 +34,21 @@ const members: BoardMember[] = [
   { user: { id: 2, name: "Grace Hopper", email: "grace@bolder.local", role: "dev" } },
 ];
 
+// Ids deliberately differ from the per-project numbers the board shows:
+// the `#` of a task is its creation ordinal inside the project, not the
+// global `tasks.id`.
 const initialTasks: TaskListItem[] = [
-  task({ id: 1, title: "Write the brief", status: "todo", priority: "medium" }),
+  task({ id: 10, title: "Write the brief", status: "todo", priority: "medium" }),
   task({
-    id: 2,
+    id: 11,
     title: "Build the board",
     status: "doing",
     priority: "high",
+    description: "## Plan\n\n- wire the board\n- **ship** it",
     assigneeId: 1,
     assignee: { id: 1, name: "Ada Lovelace", email: "ada@bolder.local", role: "dev" },
   }),
-  task({ id: 3, title: "Ship the demo", status: "done", priority: "low" }),
+  task({ id: 12, title: "Ship the demo", status: "done", priority: "low" }),
 ];
 
 function renderBoard(tasks: TaskListItem[] = initialTasks) {
@@ -53,6 +57,11 @@ function renderBoard(tasks: TaskListItem[] = initialTasks) {
 
 function column(label: string): HTMLElement {
   return screen.getByRole("region", { name: label });
+}
+
+/** Clicks a card title, which opens the read-only detail view. */
+function openTask(title: string): void {
+  fireEvent.click(screen.getByRole("button", { name: title }));
 }
 
 beforeEach(() => {
@@ -85,7 +94,7 @@ describe("KanbanBoard", () => {
 
   it("renders backlog cards in the first column", () => {
     renderBoard([
-      task({ id: 10, title: "Someday idea", status: "backlog", priority: "low" }),
+      task({ id: 9, title: "Someday idea", status: "backlog", priority: "low" }),
       ...initialTasks,
     ]);
 
@@ -94,10 +103,67 @@ describe("KanbanBoard", () => {
     expect(screen.getByText(/1 backlog.*1 to do.*1 doing.*1 done/)).toBeInTheDocument();
   });
 
-  it("shows the assignee name or Unassigned on each card", () => {
+  it("keeps the card to the task number, the title and the priority flag", () => {
     renderBoard();
-    expect(screen.getByText("Ada Lovelace")).toBeInTheDocument();
-    expect(screen.getAllByText("Unassigned").length).toBeGreaterThan(0);
+
+    const card = screen.getByRole("article", { name: "Build the board" });
+    expect(within(card).getByText("#2")).toBeInTheDocument();
+    expect(within(card).getByText("High")).toBeInTheDocument();
+    // The description, the assignee and the dates live in the detail view.
+    expect(within(card).queryByText("Plan")).not.toBeInTheDocument();
+    expect(within(card).queryByText("Ada Lovelace")).not.toBeInTheDocument();
+    expect(within(card).queryByText(/Due/)).not.toBeInTheDocument();
+  });
+
+  it("numbers the cards by their creation order inside the project, not by id", () => {
+    renderBoard();
+
+    // The ids are 10, 11 and 12: the board shows #1, #2 and #3.
+    expect(within(column("To Do")).getByText("#1")).toBeInTheDocument();
+    expect(within(column("Doing")).getByText("#2")).toBeInTheDocument();
+    expect(within(column("Done")).getByText("#3")).toBeInTheDocument();
+    expect(screen.queryByText("#10")).not.toBeInTheDocument();
+    expect(screen.queryByText("#11")).not.toBeInTheDocument();
+    expect(screen.queryByText("#12")).not.toBeInTheDocument();
+  });
+
+  it("lists the cards of a column in the order of their numbers", () => {
+    renderBoard([
+      task({ id: 12, title: "Third", status: "todo" }),
+      task({ id: 10, title: "First", status: "todo" }),
+      task({ id: 11, title: "Second", status: "todo" }),
+    ]);
+
+    const cards = within(column("To Do")).getAllByRole("article");
+    expect(cards.map((card) => card.getAttribute("aria-label"))).toEqual([
+      "First",
+      "Second",
+      "Third",
+    ]);
+    expect(cards.map((card) => within(card).getByText(/^#\d+$/).textContent)).toEqual([
+      "#1",
+      "#2",
+      "#3",
+    ]);
+  });
+
+  it("numbers the cards by creation order even when the list is out of order", () => {
+    renderBoard([initialTasks[2]!, initialTasks[0]!, initialTasks[1]!]);
+
+    expect(within(column("To Do")).getByText("#1")).toBeInTheDocument();
+    expect(within(column("Doing")).getByText("#2")).toBeInTheDocument();
+    expect(within(column("Done")).getByText("#3")).toBeInTheDocument();
+  });
+
+  it("puts the task number and the priority flag above the title", () => {
+    renderBoard();
+
+    const card = screen.getByRole("article", { name: "Build the board" });
+    const number = within(card).getByText("#2");
+    const badge = within(card).getByText("High");
+    const title = within(card).getByText("Build the board");
+    expect(number.compareDocumentPosition(badge)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+    expect(badge.compareDocumentPosition(title)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
   });
 
   it("shows a priority badge with the right tone on every card", () => {
@@ -111,17 +177,6 @@ describe("KanbanBoard", () => {
 
     const doneCard = screen.getByRole("article", { name: "Ship the demo" });
     expect(within(doneCard).getByText("Low")).toHaveClass("task-priority-low");
-  });
-
-  it("places the priority badge below the title and above the assignee row", () => {
-    renderBoard();
-
-    const card = screen.getByRole("article", { name: "Build the board" });
-    const title = within(card).getByText("Build the board");
-    const badge = within(card).getByText("High");
-    const assignee = within(card).getByText("Ada Lovelace");
-    expect(title.compareDocumentPosition(badge)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
-    expect(badge.compareDocumentPosition(assignee)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
   });
 
   it("shows empty-column copy when a column has no tasks", () => {
@@ -139,7 +194,7 @@ describe("KanbanBoard", () => {
       target: { value: "done" },
     });
 
-    expect(moveTaskStatus).toHaveBeenCalledWith("7", 1, "done");
+    expect(moveTaskStatus).toHaveBeenCalledWith("7", 10, "done");
     await waitFor(() => {
       expect(within(column("Done")).getByText("Write the brief")).toBeInTheDocument();
     });
@@ -153,7 +208,7 @@ describe("KanbanBoard", () => {
       target: { value: "backlog" },
     });
 
-    expect(moveTaskStatus).toHaveBeenCalledWith("7", 1, "backlog");
+    expect(moveTaskStatus).toHaveBeenCalledWith("7", 10, "backlog");
     await waitFor(() => {
       expect(within(column("Backlog")).getByText("Write the brief")).toBeInTheDocument();
     });
@@ -174,7 +229,7 @@ describe("KanbanBoard", () => {
   });
 
   it("creates a task through the New task form and shows it on the board", async () => {
-    const created = task({ id: 9, title: "Review copy", status: "todo", priority: "high" });
+    const created = task({ id: 13, title: "Review copy", status: "todo", priority: "high" });
     vi.mocked(createTask).mockResolvedValue(created);
     renderBoard();
 
@@ -192,10 +247,13 @@ describe("KanbanBoard", () => {
     await waitFor(() => {
       expect(screen.getAllByText("Review copy").length).toBeGreaterThan(0);
     });
+    // The new task is the fourth one created in the project.
+    const card = screen.getByRole("article", { name: "Review copy" });
+    expect(within(card).getByText("#4")).toBeInTheDocument();
   });
 
   it("creates a task preset to backlog from the column add button", async () => {
-    const created = task({ id: 11, title: "Parked idea", status: "backlog", priority: "medium" });
+    const created = task({ id: 14, title: "Parked idea", status: "backlog", priority: "medium" });
     vi.mocked(createTask).mockResolvedValue(created);
     renderBoard();
 
@@ -211,17 +269,83 @@ describe("KanbanBoard", () => {
     });
   });
 
-  it("marks an overdue card with the danger token class", () => {
+  it("marks an overdue task with the danger token class in the detail view", () => {
     const overdue = task({ id: 5, title: "Late report", status: "todo", dueAt: Date.now() - 3 * DAY_MS });
     renderBoard([overdue]);
-    const card = screen.getByRole("article", { name: "Late report" });
-    expect(within(card).getByText(/^Due /)).toHaveClass("task-due-overdue");
+    openTask("Late report");
+
+    const fact = screen.getByText("Due date").parentElement;
+    expect(fact?.querySelector("dd")).toHaveClass("task-due-overdue");
   });
 
-  it("marks a task due within two days with the amber token class", () => {
+  it("marks a task due within two days with the amber token class in the detail view", () => {
     const soon = task({ id: 6, title: "Almost due", status: "todo", dueAt: Date.now() + DAY_MS });
     renderBoard([soon]);
-    const card = screen.getByRole("article", { name: "Almost due" });
-    expect(within(card).getByText(/^Due /)).toHaveClass("task-due-soon");
+    openTask("Almost due");
+
+    const fact = screen.getByText("Due date").parentElement;
+    expect(fact?.querySelector("dd")).toHaveClass("task-due-soon");
+  });
+
+  it("opens a read-only detail view when a card is clicked", () => {
+    renderBoard();
+    openTask("Build the board");
+
+    const dialog = screen.getByRole("dialog", { name: "Task details" });
+    expect(within(dialog).getByRole("heading", { name: "Build the board" })).toBeInTheDocument();
+    expect(within(dialog).getByText("#2")).toBeInTheDocument();
+    expect(within(dialog).getByText("Doing")).toBeInTheDocument();
+    expect(within(dialog).getByText("High")).toBeInTheDocument();
+    expect(within(dialog).getByText("Ada Lovelace")).toBeInTheDocument();
+    // No editable fields in the detail view.
+    expect(within(dialog).queryByLabelText("Title")).not.toBeInTheDocument();
+    expect(within(dialog).queryByRole("textbox", { name: "Description" })).not.toBeInTheDocument();
+    expect(within(dialog).queryByRole("combobox")).not.toBeInTheDocument();
+  });
+
+  it("puts the description and the facts side by side in the detail view", () => {
+    renderBoard();
+    openTask("Build the board");
+
+    const dialog = screen.getByRole("dialog", { name: "Task details" });
+    const columns = dialog.querySelector(".task-detail-columns");
+    expect(columns).not.toBeNull();
+    expect(columns?.querySelector(".task-detail-card")).not.toBeNull();
+    expect(columns?.querySelector(".task-detail-side")).not.toBeNull();
+    // The description leads, the facts sit in the panel beside it.
+    const cards = within(columns as HTMLElement).getAllByRole("region");
+    expect(cards[0]).toHaveAccessibleName("Description");
+    expect(within(columns as HTMLElement).getByRole("complementary")).toHaveAccessibleName("Details");
+  });
+
+  it("renders the description as Markdown in the detail view", () => {
+    renderBoard();
+    openTask("Build the board");
+
+    const dialog = screen.getByRole("dialog", { name: "Task details" });
+    expect(within(dialog).getByRole("heading", { name: "Plan" })).toBeInTheDocument();
+    expect(within(dialog).getByText("wire the board")).toBeInTheDocument();
+    expect(within(dialog).getByText("ship").tagName).toBe("STRONG");
+  });
+
+  it("opens the edit form from the detail view and comes back on cancel", () => {
+    renderBoard();
+    openTask("Build the board");
+
+    fireEvent.click(screen.getByRole("button", { name: "Edit task" }));
+    expect(screen.getByRole("dialog", { name: "Edit task" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Title")).toHaveValue("Build the board");
+
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    expect(screen.getByRole("dialog", { name: "Task details" })).toBeInTheDocument();
+  });
+
+  it("closes the dialog with Escape", () => {
+    renderBoard();
+    openTask("Build the board");
+    expect(screen.getByRole("dialog", { name: "Task details" })).toBeInTheDocument();
+
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 });

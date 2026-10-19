@@ -104,4 +104,36 @@ describe("TaskForm", () => {
     fireEvent.click(screen.getByRole("button", { name: "Confirm delete" }));
     expect(onDelete).toHaveBeenCalledTimes(1);
   });
+
+  it("gives the description a comfortable box instead of a cramped one", () => {
+    renderCreate();
+    const textarea = screen.getByLabelText("Description") as HTMLTextAreaElement;
+    expect(parseInt(textarea.style.height, 10)).toBeGreaterThanOrEqual(200);
+  });
+
+  it("treats the description as Markdown and previews it on demand", () => {
+    renderCreate();
+
+    expect(screen.getByText(/Markdown supported/)).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText("Description"), {
+      target: { value: "## Plan\n\n- **ship** it" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Preview" }));
+
+    expect(screen.getByRole("heading", { name: "Plan" })).toBeInTheDocument();
+    expect(screen.getByText("ship").tagName).toBe("STRONG");
+  });
+
+  it("keeps the Markdown source when the preview is on", () => {
+    const onSubmit = vi.fn();
+    renderCreate(onSubmit);
+
+    fireEvent.change(screen.getByLabelText("Description"), { target: { value: "**Bold**" } });
+    fireEvent.click(screen.getByRole("button", { name: "Preview" }));
+    fireEvent.change(screen.getByLabelText("Title"), { target: { value: "Draft notes" } });
+    fireEvent.click(screen.getByRole("button", { name: "Create task" }));
+
+    expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ description: "**Bold**" }));
+  });
 });

@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button, Input } from "@bolder/ui";
 import type { TaskPriority } from "@bolder/shared";
 
+import { Markdown } from "./markdown";
 import type { BoardMember } from "./task-types";
 import { dueAtToDateInput } from "./task-utils";
 
@@ -37,10 +38,24 @@ export interface TaskFormProps {
   deleting?: boolean | undefined;
 }
 
+/** The description box grows with the text, up to a comfortable ceiling. */
+const MIN_DESCRIPTION_HEIGHT = 200;
+const MAX_DESCRIPTION_HEIGHT = 520;
+
+function resizeDescription(element: HTMLTextAreaElement | null): void {
+  if (!element) return;
+  element.style.height = "auto";
+  const next = Math.min(Math.max(element.scrollHeight, MIN_DESCRIPTION_HEIGHT), MAX_DESCRIPTION_HEIGHT);
+  element.style.height = `${next}px`;
+}
+
 /**
  * Shared create/edit form. Covers every editable field except status, which
  * lives on the card (select) and in drag-and-drop. Delete mirrors the
  * two-step confirm UX of the project delete control.
+ *
+ * The description is a Markdown source: the box grows as you type and a
+ * preview tab renders it the same way the detail view does.
  */
 export function TaskForm({
   heading,
@@ -56,6 +71,15 @@ export function TaskForm({
 }: TaskFormProps) {
   const [formError, setFormError] = useState<string | null>(null);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [description, setDescription] = useState(initial?.description ?? "");
+  const [preview, setPreview] = useState(false);
+  const descriptionRef = useRef<HTMLTextAreaElement>(null);
+
+  // Size the description box to its content: once on mount, again whenever
+  // the preview is left (a hidden textarea has no height to measure).
+  useEffect(() => {
+    resizeDescription(descriptionRef.current);
+  }, [preview]);
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>): void {
     event.preventDefault();
@@ -81,57 +105,146 @@ export function TaskForm({
 
   return (
     <form className="task-form" onSubmit={handleSubmit} noValidate={false}>
-      <h2>{heading}</h2>
-      <Input
-        label="Title"
-        name="title"
-        required
-        maxLength={200}
-        defaultValue={initial?.title ?? ""}
-        placeholder="What needs doing?"
-      />
-      <label className="task-form-field">
-        <span>Description</span>
-        <textarea
-          name="description"
-          rows={3}
-          defaultValue={initial?.description ?? ""}
-          placeholder="Any helpful detail (optional)"
+      <header className="task-form-head">
+        <h2>{heading}</h2>
+        <button type="button" className="task-form-close" onClick={onCancel} aria-label="Close form">
+          <span aria-hidden="true">×</span>
+        </button>
+      </header>
+
+      <div className="task-form-body">
+        <Input
+          label="Title"
+          name="title"
+          required
+          maxLength={200}
+          defaultValue={initial?.title ?? ""}
+          placeholder="What needs doing?"
+          className="task-form-title-input"
         />
-      </label>
-      <label className="task-form-field">
-        <span>Assignee</span>
-        <select name="assigneeId" defaultValue={initial?.assigneeId?.toString() ?? ""}>
-          <option value="">Unassigned</option>
-          {members.map((member) => (
-            <option key={member.user.id} value={member.user.id}>
-              {member.user.name}
-            </option>
-          ))}
-        </select>
-      </label>
-      <label className="task-form-field">
-        <span>Due date</span>
-        <input type="date" name="dueDate" defaultValue={dueAtToDateInput(initial?.dueAt ?? null)} />
-      </label>
-      <label className="task-form-field">
-        <span>Priority</span>
-        <select name="priority" defaultValue={initial?.priority ?? "medium"}>
-          <option value="low">Low</option>
-          <option value="medium">Medium</option>
-          <option value="high">High</option>
-        </select>
-      </label>
-      {formError ? (
-        <p role="alert" className="task-form-error">
-          {formError}
-        </p>
-      ) : null}
-      {serverError ? (
-        <p role="alert" className="task-form-error">
-          {serverError}
-        </p>
-      ) : null}
+
+        <div className="task-form-field">
+          <div className="task-form-label-row">
+            <label htmlFor="task-description">Description</label>
+            <div className="task-form-tabs" role="group" aria-label="Description view">
+              <button
+                type="button"
+                className="task-form-tab"
+                aria-pressed={!preview}
+                onClick={() => setPreview(false)}
+              >
+                Write
+              </button>
+              <button
+                type="button"
+                className="task-form-tab"
+                aria-pressed={preview}
+                onClick={() => setPreview(true)}
+              >
+                Preview
+              </button>
+            </div>
+          </div>
+          <textarea
+            id="task-description"
+            ref={descriptionRef}
+            name="description"
+            rows={8}
+            value={description}
+            hidden={preview}
+            onChange={(event) => {
+              setDescription(event.target.value);
+              resizeDescription(event.target);
+            }}
+            placeholder={"Any helpful detail (optional)\n\nMarkdown works here: **bold**, lists, links."}
+          />
+          <div className="task-form-preview" hidden={!preview}>
+            {description.trim() === "" ? (
+              <p className="task-form-preview-empty">Nothing to preview yet.</p>
+            ) : (
+              <Markdown>{description}</Markdown>
+            )}
+          </div>
+          <p className="task-form-hint">
+            Markdown supported — <strong>bold</strong>, <em>italic</em>, <code>code</code>, lists and
+            links.
+          </p>
+        </div>
+
+        <div className="task-form-grid">
+          <label className="task-form-field">
+            <span>Assignee</span>
+            <select name="assigneeId" defaultValue={initial?.assigneeId?.toString() ?? ""}>
+              <option value="">Unassigned</option>
+              {members.map((member) => (
+                <option key={member.user.id} value={member.user.id}>
+                  {member.user.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="task-form-field">
+            <span>Due date</span>
+            <input
+              type="date"
+              name="dueDate"
+              defaultValue={dueAtToDateInput(initial?.dueAt ?? null)}
+            />
+          </label>
+          <label className="task-form-field">
+            <span>Priority</span>
+            <select name="priority" defaultValue={initial?.priority ?? "medium"}>
+              <option value="low">Low</option>
+              <option value="medium">Medium</option>
+              <option value="high">High</option>
+            </select>
+          </label>
+        </div>
+
+        {formError ? (
+          <p role="alert" className="task-form-error">
+            {formError}
+          </p>
+        ) : null}
+        {serverError ? (
+          <p role="alert" className="task-form-error">
+            {serverError}
+          </p>
+        ) : null}
+
+        {onDelete ? (
+          <div className="task-form-danger">
+            {!confirmingDelete ? (
+              <Button
+                type="button"
+                variant="secondary"
+                disabled={pending || deleting}
+                onClick={() => setConfirmingDelete(true)}
+              >
+                Delete task
+              </Button>
+            ) : (
+              <div>
+                <p>Delete this task? This cannot be undone.</p>
+                <div className="task-form-actions">
+                  <Button type="button" disabled={deleting} onClick={onDelete}>
+                    {deleting ? "Deleting…" : "Confirm delete"}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    disabled={deleting}
+                    onClick={() => setConfirmingDelete(false)}
+                  >
+                    Keep task
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        ) : null}
+      </div>
+
       <div className="task-form-actions">
         <Button type="submit" disabled={pending}>
           {pending ? "Saving…" : submitLabel}
@@ -140,32 +253,6 @@ export function TaskForm({
           Cancel
         </Button>
       </div>
-      {onDelete ? (
-        <div className="task-form-danger">
-          {!confirmingDelete ? (
-            <Button type="button" variant="secondary" disabled={pending || deleting} onClick={() => setConfirmingDelete(true)}>
-              Delete task
-            </Button>
-          ) : (
-            <div>
-              <p>Delete this task? This cannot be undone.</p>
-              <div className="task-form-actions">
-                <Button type="button" disabled={deleting} onClick={onDelete}>
-                  {deleting ? "Deleting…" : "Confirm delete"}
-                </Button>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  disabled={deleting}
-                  onClick={() => setConfirmingDelete(false)}
-                >
-                  Keep task
-                </Button>
-              </div>
-            </div>
-          )}
-        </div>
-      ) : null}
     </form>
   );
 }

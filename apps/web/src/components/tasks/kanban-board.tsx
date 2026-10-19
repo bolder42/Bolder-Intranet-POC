@@ -1,16 +1,17 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@bolder/ui";
 import type { TaskStatus } from "@bolder/shared";
 
 import type { BoardMember, TaskListItem } from "./task-types";
-import { groupByStatus, STATUS_COLUMNS, taskCounts } from "./task-utils";
+import { groupByStatus, projectTaskNumbers, STATUS_COLUMNS, taskCounts, taskOrdinal } from "./task-utils";
 import { dateInputToDueAt } from "./task-utils";
 import { createTask, deleteTask, listTasks, moveTaskStatus, updateTask } from "./tasks-api";
 import type { TaskFormValues } from "./task-form";
 import { TaskForm } from "./task-form";
 import { TaskCard } from "./task-card";
+import { TaskDetail } from "./task-detail";
 import "./kanban.css";
 
 export interface KanbanBoardProps {
@@ -21,7 +22,9 @@ export interface KanbanBoardProps {
 
 type DialogState =
   | { mode: "create"; status: TaskStatus }
-  | { mode: "edit"; task: TaskListItem }
+  | { mode: "detail"; task: TaskListItem }
+  /** `fromDetail` sends Cancel back to the detail view instead of closing. */
+  | { mode: "edit"; task: TaskListItem; fromDetail: boolean }
   | null;
 
 function valuesToCreatePayload(values: TaskFormValues, status: TaskStatus) {
@@ -39,6 +42,9 @@ function valuesToCreatePayload(values: TaskFormValues, status: TaskStatus) {
  * Client kanban board. The server page fetches the first paint; every move,
  * create, edit, delete and retry below runs against the typed Tasks RPC with
  * optimistic updates and rollback on failure.
+ *
+ * Clicking a card opens the read-only detail view; the edit form is one
+ * click further, from the detail view's "Edit task" button.
  */
 export function KanbanBoard({ projectId, initialTasks, members }: KanbanBoardProps) {
   const [tasks, setTasks] = useState<TaskListItem[]>(initialTasks);
@@ -49,11 +55,33 @@ export function KanbanBoard({ projectId, initialTasks, members }: KanbanBoardPro
   const [dialog, setDialog] = useState<DialogState>(null);
   const [draggedId, setDraggedId] = useState<number | null>(null);
   const [dropTarget, setDropTarget] = useState<TaskStatus | null>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
 
-  const groups = useMemo(() => groupByStatus(tasks), [tasks]);
+  // The board lists the tasks in the same order as their numbers: by id,
+  // which is the order they were created in. The `#` of a task is its
+  // creation ordinal inside THIS project, not the global `tasks.id` — one
+  // map, computed once for the whole board.
+  const orderedTasks = useMemo(() => [...tasks].sort((a, b) => a.id - b.id), [tasks]);
+  const groups = useMemo(() => groupByStatus(orderedTasks), [orderedTasks]);
   const counts = useMemo(() => taskCounts(tasks), [tasks]);
+  const taskNumbers = useMemo(() => projectTaskNumbers(tasks), [tasks]);
   const editingTask =
-    dialog?.mode === "edit" ? tasks.find((task) => task.id === dialog.task.id) ?? dialog.task : null;
+    dialog?.mode === "edit" ? (tasks.find((task) => task.id === dialog.task.id) ?? dialog.task) : null;
+  const detailTask =
+    dialog?.mode === "detail"
+      ? (tasks.find((task) => task.id === dialog.task.id) ?? dialog.task)
+      : null;
+
+  // The panel takes focus when it opens, and Escape always closes it.
+  useEffect(() => {
+    if (!dialog) return;
+    dialogRef.current?.focus();
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") setDialog(null);
+    }
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [dialog]);
 
   function readDropId(event: React.DragEvent): number | null {
     const raw = event.dataTransfer.getData("text/plain");
@@ -136,6 +164,9 @@ export function KanbanBoard({ projectId, initialTasks, members }: KanbanBoardPro
       setDeleting(false);
     }
   }
+
+  const dialogTitle =
+    dialog?.mode === "create" ? "Create task" : dialog?.mode === "detail" ? "Task details" : "Edit task";
 
   return (
     <section className="kanban" aria-label="Tasks board">
@@ -234,10 +265,11 @@ export function KanbanBoard({ projectId, initialTasks, members }: KanbanBoardPro
                     <TaskCard
                       key={task.id}
                       task={task}
+                      number={taskOrdinal(taskNumbers, task.id)}
                       dragging={draggedId === task.id}
                       onDragStart={setDraggedId}
                       onMove={(taskId, status) => void handleMove(taskId, status)}
-                      onOpen={(open) => setDialog({ mode: "edit", task: open })}
+                      onOpen={(open) => setDialog({ mode: "detail", task: open })}
                     />
                   ))
                 )}
@@ -250,14 +282,19 @@ export function KanbanBoard({ projectId, initialTasks, members }: KanbanBoardPro
       {dialog ? (
         <div className="kanban-overlay" onClick={() => (saving || deleting ? null : setDialog(null))}>
           <div
+            ref={dialogRef}
             role="dialog"
             aria-modal="true"
-            aria-label={dialog.mode === "create" ? "Create task" : "Edit task"}
-            className="kanban-dialog"
+            aria-label={dialogTitle}
+            tabIndex={-1}
+            className={`kanban-dialog ${
+              dialog.mode === "detail" ? "kanban-dialog-detail" : "kanban-dialog-form"
+            }`}
             onClick={(event) => event.stopPropagation()}
           >
             {dialog.mode === "create" ? (
               <TaskForm
+                key="create"
                 heading="New task"
                 members={members}
                 submitLabel="Create task"
@@ -266,8 +303,16 @@ export function KanbanBoard({ projectId, initialTasks, members }: KanbanBoardPro
                 onSubmit={(values) => void handleCreate(values, dialog.status)}
                 onCancel={() => setDialog(null)}
               />
+            ) : dialog.mode === "detail" && detailTask ? (
+              <TaskDetail
+                task={detailTask}
+                number={taskOrdinal(taskNumbers, detailTask.id)}
+                onEdit={(open) => setDialog({ mode: "edit", task: open, fromDetail: true })}
+                onClose={() => setDialog(null)}
+              />
             ) : editingTask ? (
               <TaskForm
+                key={editingTask.id}
                 heading="Edit task"
                 members={members}
                 submitLabel="Save changes"
@@ -281,7 +326,11 @@ export function KanbanBoard({ projectId, initialTasks, members }: KanbanBoardPro
                   dueAt: editingTask.dueAt,
                 }}
                 onSubmit={(values) => void handleUpdate(editingTask.id, values)}
-                onCancel={() => setDialog(null)}
+                onCancel={() =>
+                  dialog.mode === "edit" && dialog.fromDetail
+                    ? setDialog({ mode: "detail", task: editingTask })
+                    : setDialog(null)
+                }
                 onDelete={() => void handleDelete(editingTask.id)}
                 deleting={deleting}
               />
