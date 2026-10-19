@@ -114,7 +114,7 @@ Explicitly out of scope for the POC to prevent drift:
 - Notifications module (deferred by decision; revisit post-POC)
 - Real-time collaboration (websockets, live cursors, presence)
 - Email digests, push notifications, external webhooks
-- Full GitHub Projects parity — kanban stays minimal: To Do / Doing / Done
+- Full GitHub Projects parity — kanban stays minimal: Backlog / To Do / Doing / Done, with a Low/Medium/High priority flag
 - Per-project customization (theming, custom workflows, custom fields)
 - Native mobile app — responsive web only
 - SSO / SAML / OAuth providers — Auth.js with email/password is enough for POC
@@ -144,3 +144,14 @@ This repository uses a GitFlow-style layout: `develop` is the integration branch
 - **Default PR target is `develop`, never `main`.** All PRs opened by an agent — features, fixes, refactors, chore PRs — MUST target `develop` by default.
 - **A PR to `main` requires an explicit, unambiguous request AND a confirmation step before the agent opens it.** "Merge it", "open the PR", or any other phrasing that could be read as targeting `main` (especially when the agent is currently on `main` or the only plausible base appears to be `main`) is NOT sufficient. The agent MUST pause and ask the user to explicitly confirm the target branch and that `main` is the intended destination, citing this rule, before opening the PR. No inference, no best-guess.
 - **`main` is updated only via a release PR from `develop`.** Do not merge a feature branch, a `fix/*` branch, or any other branch into `main` directly, even if the user is already on `main` and says "merge it" — confirm first.
+
+<!-- BEGIN:turborepo-agent-rules -->
+
+# This is NOT the Turborepo you know
+
+Turborepo configuration, task behavior, and CLI commands can vary between installed versions and may differ from your training data. Resolve the `turbo` package from this file's directory or relevant workspace; in monorepos, it may not be visible from the repository root. For example, run `node -p "require.resolve('turbo/package.json')"` from a workspace that depends on `turbo`.
+
+Read `docs/README.md` inside that installed package first, then read the relevant pages from its `docs/` directory before changing Turborepo configuration or commands. Heed deprecation notices. These bundled docs match the installed package version and are available without network access.
+
+This block is written and re-added by `turbo` before repository-scoped commands when an AI agent is detected. In the Turborepo source repository, its template is defined in `crates/turborepo-cli/src/cli/agent_guidance.rs`. Removing the managed block while updates are enabled means a later qualifying invocation will add it again. Set `"agentGuidance": false` in the root `turbo.json` or `turbo.jsonc` to opt out; this does not remove an existing block. Keep the block committed with your work to avoid an uncommitted change on the next agent invocation.
+<!-- END:turborepo-agent-rules -->

@@ -4,7 +4,7 @@ import { authRoutes } from "./modules/auth/auth.routes.js";
 import { homeRoutes } from "./modules/home/home.routes.js";
 import { projectsRoutes } from "./modules/projects/projects.routes.js";
 import { scheduleRoutes } from "./modules/schedule/schedule.stub.js";
-import { tasksRoutes } from "./modules/tasks/tasks.stub.js";
+import { tasksRoutes } from "./modules/tasks/tasks.routes.js";
 import { wikiRoutes } from "./modules/wiki/wiki.stub.js";
 import { errorHandler } from "./middleware/error.js";
 
