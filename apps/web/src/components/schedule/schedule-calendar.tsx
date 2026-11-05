@@ -8,6 +8,13 @@ import { addMonths, buildMonthGrid, formatMonth, toDateKey, toMonthKey } from ".
 
 const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
+/**
+ * Chips rendered per day before collapsing the rest into a "+N more" label.
+ * The calendar row height is fixed in CSS, so extra entries are intentionally
+ * not shown rather than stretching the grid.
+ */
+export const CALENDAR_MAX_CHIPS = 3;
+
 export interface ScheduleCalendarProps {
   items: ScheduleItem[];
   /** `yyyy-mm-dd` UTC key for "today", supplied by the server to avoid hydration drift. */
@@ -84,10 +91,13 @@ export function ScheduleCalendar({
             .filter(Boolean)
             .join(" ");
 
+          const visibleItems = dayItems.slice(0, CALENDAR_MAX_CHIPS);
+          const hiddenCount = dayItems.length - visibleItems.length;
+
           const content = (
             <>
               <span className="schedule-day-number">{cell.day}</span>
-              {dayItems.map((item) => (
+              {visibleItems.map((item) => (
                 <span
                   key={item.id}
                   className={`schedule-chip schedule-chip-${item.kind}`}
@@ -96,6 +106,9 @@ export function ScheduleCalendar({
                   {item.title}
                 </span>
               ))}
+              {hiddenCount > 0 ? (
+                <span className="schedule-day-more">+{hiddenCount} more</span>
+              ) : null}
             </>
           );
 

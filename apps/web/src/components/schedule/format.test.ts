@@ -1,7 +1,14 @@
 import type { ScheduleItem } from "@bolder/shared";
 import { describe, expect, it } from "vitest";
 
-import { buildMonthGrid, formatMonth, groupScheduleItems, toDateKey } from "./format";
+import {
+  buildMonthGrid,
+  formatMonth,
+  groupScheduleItems,
+  paginate,
+  SCHEDULE_PAGE_SIZE,
+  toDateKey,
+} from "./format";
 
 function item(
   partial: Partial<ScheduleItem> & Pick<ScheduleItem, "id" | "kind" | "dueAt">,
@@ -42,5 +49,28 @@ describe("schedule format helpers", () => {
 
   it("renders a readable month label", () => {
     expect(formatMonth("2026-11")).toBe("November 2026");
+  });
+});
+
+describe("paginate", () => {
+  const list = Array.from({ length: 7 }, (_, index) => index + 1);
+
+  it("slices items into fixed-size pages", () => {
+    expect(paginate(list, 1)).toEqual({ page: 1, totalPages: 2, items: [1, 2, 3, 4, 5] });
+    expect(paginate(list, 2)).toEqual({ page: 2, totalPages: 2, items: [6, 7] });
+  });
+
+  it("clamps out-of-range pages", () => {
+    expect(paginate(list, 99).page).toBe(2);
+    expect(paginate(list, 0).page).toBe(1);
+    expect(paginate(list, -3).page).toBe(1);
+  });
+
+  it("always reports at least one page", () => {
+    expect(paginate([], 1)).toEqual({ page: 1, totalPages: 1, items: [] });
+  });
+
+  it("defaults to five entries per page", () => {
+    expect(SCHEDULE_PAGE_SIZE).toBe(5);
   });
 });

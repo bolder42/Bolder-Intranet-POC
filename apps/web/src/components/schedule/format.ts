@@ -86,3 +86,30 @@ export function groupScheduleItems(items: ScheduleItem[], today: string): Schedu
 
   return { overdue, upcoming, past };
 }
+
+/** Maximum number of list entries shown per page inside a group. */
+export const SCHEDULE_PAGE_SIZE = 5;
+
+export interface Paginated<T> {
+  page: number;
+  totalPages: number;
+  items: T[];
+}
+
+/**
+ * Slices `items` into a single page and clamps the requested page into
+ * `[1, totalPages]`, so stale page state (for example after deleting the last
+ * entry of the last page) never renders an empty view.
+ */
+export function paginate<T>(
+  items: T[],
+  page: number,
+  pageSize: number = SCHEDULE_PAGE_SIZE,
+): Paginated<T> {
+  const totalPages = Math.max(1, Math.ceil(items.length / pageSize));
+  const requested = Math.trunc(page) || 1;
+  const safePage = Math.min(Math.max(1, requested), totalPages);
+  const start = (safePage - 1) * pageSize;
+
+  return { page: safePage, totalPages, items: items.slice(start, start + pageSize) };
+}
