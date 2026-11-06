@@ -1,42 +1,54 @@
-'use client';
+"use client";
 
-import { Button, Input } from '@bolder/ui';
-import { signIn } from 'next-auth/react';
-import { useState } from 'react';
-import type { FormEvent } from 'react';
+import { Button, Input } from "@bolder/ui";
+import { signIn } from "next-auth/react";
+import { useState } from "react";
+import type { FormEvent } from "react";
 
 export function LoginForm() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState<string | null>(null);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [formError, setFormError] = useState<string | null>(null);
+  const [fieldError, setFieldError] = useState<string | undefined>(undefined);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setError(null);
+    setFormError(null);
+    setFieldError(undefined);
     setIsSubmitting(true);
 
-    const result = await signIn('credentials', {
+    const result = await signIn("credentials", {
       email,
       password,
       redirect: false,
-      redirectTo: '/app',
+      redirectTo: "/app",
     });
 
     setIsSubmitting(false);
 
     if (!result || result.error) {
-      setError('Invalid email or password.');
+      const message = "Invalid email or password.";
+      setFormError(message);
+      setFieldError(message);
       return;
     }
 
-    window.location.assign(result.url ?? '/app');
+    window.location.assign(result.url ?? "/app");
   }
 
   return (
-    <form className="auth-form" onSubmit={handleSubmit}>
-      <h1 className="auth-title">Sign in</h1>
-      <p className="auth-subtitle">Welcome back to the Bolder Intranet.</p>
+    <form className="auth-form" onSubmit={handleSubmit} aria-label="Sign in">
+      <div>
+        <h2 className="auth-section-title">Sign in</h2>
+        <p className="auth-section-subtitle">Welcome back to the Bolder Intranet.</p>
+      </div>
+
+      {formError ? (
+        <div className="auth-form-alert" role="alert">
+          {formError}
+        </div>
+      ) : null}
 
       <Input
         label="Email"
@@ -55,12 +67,12 @@ export function LoginForm() {
         autoComplete="current-password"
         value={password}
         onChange={(event) => setPassword(event.target.value)}
-        error={error ?? undefined}
+        error={fieldError}
         required
       />
 
-      <Button type="submit" disabled={isSubmitting}>
-        {isSubmitting ? 'Signing in...' : 'Sign in'}
+      <Button type="submit" className="auth-submit" disabled={isSubmitting}>
+        {isSubmitting ? "Signing in..." : "Sign in"}
       </Button>
 
       <p className="auth-alt">
