@@ -121,7 +121,7 @@ Redeeming is not the only invitation operation reachable by an unauthenticated v
 
 ### POC status
 
-The Admin-facing management front-end is **NOT implemented** in the POC. Invitation codes are generated through an operator CLI script. An Admin dashboard for managing invitations is deferred; do not build it as part of POC scope.
+The Admin-facing management front-end is **NOT implemented** in the POC. Invitation codes are generated through an operator CLI script. An Admin dashboard for managing invitations is deferred; do not build it as part of POC scope. See [`DEFERRED.md`](./DEFERRED.md) for the CLI usage and the known limitations of this module.
 
 ---
 
