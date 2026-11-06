@@ -198,8 +198,9 @@ This is the architectural invariant that keeps module owners from colliding. The
 
 ## 6. `project_id` partitioning
 
-Every table except `users`, `sessions`, and `project_members` (which has its own
-FK) carries `projectId integer notNull references projects.id onDelete cascade`
+Every table except `users`, `sessions`, `invites` (global — invitation codes do
+not belong to a project), and `project_members` (which has its own FK) carries
+`projectId integer notNull references projects.id onDelete cascade`
 plus an index. Queries for those tables MUST go through the helper:
 
 ```ts
