@@ -14,19 +14,19 @@ let devToken: string;
 beforeEach(async () => {
   h = await setupTestApp();
 
-  const tech = await registerUser(h.app, {
+  const tech = await registerUser(h, {
     email: "tech@bolder.local",
     password: "password123",
     name: "Tech",
     role: "tech_lead",
   });
-  const admin = await registerUser(h.app, {
+  const admin = await registerUser(h, {
     email: "admin@bolder.local",
     password: "password123",
     name: "Admin",
     role: "admin",
   });
-  const dev = await registerUser(h.app, {
+  const dev = await registerUser(h, {
     email: "dev@bolder.local",
     password: "password123",
     name: "Dev",
@@ -56,7 +56,7 @@ describe("projects module", () => {
     const created = (await (await createProject(techToken, "Delete me")).json()) as {
       project: { id: number };
     };
-    const other = await registerUser(h.app, {
+    const other = await registerUser(h, {
       email: "other-tech@bolder.local",
       password: "password123",
       name: "Other",
@@ -92,7 +92,7 @@ describe("projects module", () => {
     ).toBe(404);
   });
   it("persists deadlines and public participant details in list and detail", async () => {
-    const participant = await registerUser(h.app, {
+    const participant = await registerUser(h, {
       email: "participant@bolder.local",
       password: "password123",
       name: "Participant",
@@ -173,7 +173,8 @@ describe("projects module", () => {
       });
       expect(response.status).toBe(200);
       const data = (await response.json()) as { users: unknown[] };
-      expect(data.users).toHaveLength(3);
+      // 3 registered users + the inert seed admin used as invite creator.
+      expect(data.users).toHaveLength(4);
       expect(JSON.stringify(data)).not.toContain("passwordHash");
     }
   });
@@ -289,7 +290,7 @@ describe("projects module", () => {
       project: { id: number };
     };
 
-    const devUser = (await registerUser(h.app, {
+    const devUser = (await registerUser(h, {
       email: "second-dev@bolder.local",
       password: "password123",
       name: "Second Dev",

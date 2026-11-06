@@ -13,6 +13,7 @@ import {
   type Role,
 } from "@bolder/shared";
 import { env } from "../../env.js";
+import { redeemInvite } from "../invites/invites.service.js";
 import { usersRepo } from "./auth.repo.js";
 
 const SCRYPT_KEYLEN = 64;
@@ -96,17 +97,24 @@ export function verifyToken(token: string): TokenPayload {
   return parsed.data;
 }
 
-/** Registers a new user. Throws CONFLICT if the email is already taken. */
+/**
+ * Registers a new user. Registration is invite-gated: the account's global
+ * role is derived from the invite row, never from the client payload.
+ * Throws CONFLICT if the email is already taken.
+ */
 export function register(input: RegisterInput) {
   if (usersRepo.findByEmail(input.email)) {
     throw new ApiError(ErrorCode.CONFLICT, "Email already registered.");
   }
-  return usersRepo.create({
+
+  const { user } = redeemInvite({
+    code: input.inviteCode,
     email: input.email,
     name: input.name,
-    role: input.role,
     passwordHash: hashPassword(input.password),
   });
+
+  return user;
 }
 
 /** Verifies credentials and returns the user, or throws UNAUTHORIZED. */
