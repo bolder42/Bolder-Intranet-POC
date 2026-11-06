@@ -16,19 +16,19 @@ const DAY = 24 * 60 * 60 * 1000;
 beforeEach(async () => {
   h = await setupTestApp();
 
-  const lead = await registerUser(h.app, {
+  const lead = await registerUser(h, {
     email: "lead@bolder.local",
     password: "password123",
     name: "Lead",
     role: "tech_lead",
   });
-  const admin = await registerUser(h.app, {
+  const admin = await registerUser(h, {
     email: "admin@bolder.local",
     password: "password123",
     name: "Admin",
     role: "admin",
   });
-  const outsider = await registerUser(h.app, {
+  const outsider = await registerUser(h, {
     email: "outsider@bolder.local",
     password: "password123",
     name: "Outsider",

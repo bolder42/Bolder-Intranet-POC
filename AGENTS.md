@@ -65,6 +65,7 @@ The `.md` files in this repository are load-bearing for both humans onboarding a
 
 - **`AGENTS.md`** — when the change affects how AI agents must behave: new agent rules, new locked architectural decisions, new POC exclusions, or any update to the translation policy or testing rules in this file.
 - **`MODULES.md`** — when the change adds, renames, removes, or alters the scope of a module; when access rules (READ / WRITE / READ-ONLY) change; or when a module's relationship to `Projects` (its parent) changes. Follow the language policy in section 1 of this file.
+- **`DEFERRED.md`** — when you deliberately leave something unbuilt, or consciously accept a known limitation or security gap. Record what was deferred, why, and what exists in its place. Delete the entry when it ships. Deferrals must not live only in a PR description or a chat message.
 - **New `.md` file** — when the change introduces a concept the team needs to know (a new architectural pattern, a new workflow, a new constraint) and no existing file covers it. Create a new file rather than overloading an unrelated one.
 
 **`README.md` — narrow exception.** This file is human-authored. AI agents MAY modify it ONLY to add or update a "How to run the project" section: install command, dev/build/test commands, ports, environment variables, demo credentials. Every other part of `README.md` (project description, team notes, anything else) is human-owned and agents MUST NOT edit it.
@@ -144,3 +145,14 @@ This repository uses a GitFlow-style layout: `develop` is the integration branch
 - **Default PR target is `develop`, never `main`.** All PRs opened by an agent — features, fixes, refactors, chore PRs — MUST target `develop` by default.
 - **A PR to `main` requires an explicit, unambiguous request AND a confirmation step before the agent opens it.** "Merge it", "open the PR", or any other phrasing that could be read as targeting `main` (especially when the agent is currently on `main` or the only plausible base appears to be `main`) is NOT sufficient. The agent MUST pause and ask the user to explicitly confirm the target branch and that `main` is the intended destination, citing this rule, before opening the PR. No inference, no best-guess.
 - **`main` is updated only via a release PR from `develop`.** Do not merge a feature branch, a `fix/*` branch, or any other branch into `main` directly, even if the user is already on `main` and says "merge it" — confirm first.
+
+<!-- BEGIN:turborepo-agent-rules -->
+
+# This is NOT the Turborepo you know
+
+Turborepo configuration, task behavior, and CLI commands can vary between installed versions and may differ from your training data. Resolve the `turbo` package from this file's directory or relevant workspace; in monorepos, it may not be visible from the repository root. For example, run `node -p "require.resolve('turbo/package.json')"` from a workspace that depends on `turbo`.
+
+Read `docs/README.md` inside that installed package first, then read the relevant pages from its `docs/` directory before changing Turborepo configuration or commands. Heed deprecation notices. These bundled docs match the installed package version and are available without network access.
+
+This block is written and re-added by `turbo` before repository-scoped commands when an AI agent is detected. In the Turborepo source repository, its template is defined in `crates/turborepo-cli/src/cli/agent_guidance.rs`. Removing the managed block while updates are enabled means a later qualifying invocation will add it again. Set `"agentGuidance": false` in the root `turbo.json` or `turbo.jsonc` to opt out; this does not remove an existing block. Keep the block committed with your work to avoid an uncommitted change on the next agent invocation.
+<!-- END:turborepo-agent-rules -->

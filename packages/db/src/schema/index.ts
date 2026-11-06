@@ -4,3 +4,4 @@ export * from "./projectMembers.js";
 export * from "./tasks.js";
 export * from "./wiki.js";
 export * from "./schedule.js";
+export * from "./invites.js";

@@ -22,6 +22,13 @@
       "when": 1791486553162,
       "tag": "0002_clumsy_gladiator",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1793928321051,
+      "tag": "0003_long_giant_girl",
+      "breakpoints": true
     }
   ]
 }

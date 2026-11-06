@@ -10,13 +10,15 @@ describe("auth schemas", () => {
     expect(LoginSchema.safeParse({ email: "nope", password: "short" }).success).toBe(false);
   });
 
-  it("defaults register role to dev", () => {
-    const parsed = RegisterSchema.parse({
-      email: "dev@bolder.local",
-      password: "password123",
-      name: "Dev",
-    });
-    expect(parsed.role).toBe("dev");
+  it("requires an invite code and ignores any client-supplied role", () => {
+    const base = { email: "dev@bolder.local", password: "password123", name: "Dev" };
+
+    expect(RegisterSchema.safeParse(base).success).toBe(false);
+    expect(RegisterSchema.safeParse({ ...base, inviteCode: "   " }).success).toBe(false);
+
+    const parsed = RegisterSchema.parse({ ...base, inviteCode: " abc-123 ", role: "admin" });
+    expect(parsed.inviteCode).toBe("abc-123");
+    expect(parsed).not.toHaveProperty("role");
   });
 
   it("rejects a public user without a known role", () => {
