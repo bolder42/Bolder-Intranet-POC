@@ -13,7 +13,10 @@ import {
   type Role,
 } from "@bolder/shared";
 import { env } from "../../env.js";
-import { redeemInvite } from "../invites/invites.service.js";
+import {
+  assertInviteRedeemable,
+  redeemInvite,
+} from "../invites/invites.service.js";
 import { usersRepo } from "./auth.repo.js";
 
 const SCRYPT_KEYLEN = 64;
@@ -103,6 +106,11 @@ export function verifyToken(token: string): TokenPayload {
  * Throws CONFLICT if the email is already taken.
  */
 export function register(input: RegisterInput) {
+  // Validate the invite FIRST. Checking the email first would let anyone with
+  // no credentials enumerate registered addresses, and hashing before the
+  // invite check would burn scrypt CPU on requests that cannot succeed.
+  assertInviteRedeemable(input.inviteCode);
+
   if (usersRepo.findByEmail(input.email)) {
     throw new ApiError(ErrorCode.CONFLICT, "Email already registered.");
   }

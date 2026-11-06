@@ -115,7 +115,9 @@ State precedence is `revoked` → `used` → `expired` → `active`.
 
 **Only Admins can generate, list, and revoke invitations.** Generating and revoking require WRITE and READ access to the database.
 
-Redeeming a code is part of account creation and therefore happens **before a session exists** — it is the only invitation operation reachable by an unauthenticated visitor, and it requires READ-only access.
+Redeeming a code is part of account creation and therefore happens **before a session exists**. It is not an admin operation, and it requires **WRITE and READ** access: claiming the code and creating the account are a single atomic write.
+
+Redeeming is not the only invitation operation reachable by an unauthenticated visitor. A **code check** is also public, so the registration form can confirm a code before submitting. It requires READ-only access and exposes only whether the code is redeemable, the role it grants, and a reason when it is not — never who created it or who used it.
 
 ### POC status
 
@@ -147,7 +149,7 @@ Always belongs to a project — it is not standalone.
 | Home page               | READ-ONLY                                    |
 | Database                | (data layer)                                 |
 | Roles                   | (extends database auth/control — no direct DB access) |
-| Invitations             | WRITE and READ (Admin) — READ-ONLY when redeeming a code |
+| Invitations             | WRITE and READ (Admin) — WRITE and READ when redeeming a code; READ-ONLY for the public code check |
 | Task view per project   | WRITE and READ                               |
 
 ---

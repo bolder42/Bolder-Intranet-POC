@@ -33,7 +33,7 @@ export const CreateInviteSchema = z.object({
 export type CreateInviteInput = z.infer<typeof CreateInviteSchema>;
 
 export const ValidateInviteSchema = z.object({
-  code: z.string().trim().min(1),
+  code: z.string().trim().min(1).max(64),
 });
 export type ValidateInviteInput = z.infer<typeof ValidateInviteSchema>;
 

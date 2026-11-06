@@ -19,6 +19,72 @@ afterEach(() => {
 const JSON_HEADERS = { "content-type": "application/json" };
 
 describe("auth module", () => {
+  it("checks the invite before the email, so it is not an account-existence oracle", async () => {
+    // Register a user first so the email definitely exists.
+    await registerUser(h, {
+      email: "taken@bolder.local",
+      password: "password123",
+      name: "Taken",
+    });
+
+    // A caller with no credentials and a bogus code must not be able to learn
+    // whether an email is registered: the invite error wins.
+    const res = await h.app.request("/api/auth/register", {
+      method: "POST",
+      headers: JSON_HEADERS,
+      body: JSON.stringify({
+        email: "taken@bolder.local",
+        password: "password123",
+        name: "Impostor",
+        inviteCode: "NOSUCHCD",
+      }),
+    });
+
+    expect(res.status).toBe(422);
+    const body = (await res.json()) as { error: { message: string } };
+    expect(body.error.message).toBe("Invitation code is not valid.");
+  });
+
+  it("uses a valid invite code to report a duplicate email", async () => {
+    await registerUser(h, {
+      email: "taken@bolder.local",
+      password: "password123",
+      name: "Taken",
+    });
+    const invite = seedInvite(h);
+
+    const res = await h.app.request("/api/auth/register", {
+      method: "POST",
+      headers: JSON_HEADERS,
+      body: JSON.stringify({
+        email: "taken@bolder.local",
+        password: "password123",
+        name: "Second",
+        inviteCode: invite.code,
+      }),
+    });
+
+    expect(res.status).toBe(409);
+  });
+
+  it("allows the browser to preflight the register endpoint", async () => {
+    const res = await h.app.request("/api/auth/register", {
+      method: "OPTIONS",
+      headers: {
+        Origin: "http://localhost:3000",
+        "Access-Control-Request-Method": "POST",
+        "Access-Control-Request-Headers": "content-type",
+      },
+    });
+
+    expect(res.headers.get("access-control-allow-origin")).toBe(
+      "http://localhost:3000",
+    );
+    expect(res.headers.get("access-control-allow-headers")?.toLowerCase()).toContain(
+      "content-type",
+    );
+  });
+
   it("registers, verifies and returns the current user", async () => {
     const invite = seedInvite(h, { role: "tech_lead" });
     const registerRes = await h.app.request("/api/auth/register", {

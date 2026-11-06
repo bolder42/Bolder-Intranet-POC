@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { cors } from "hono/cors";
 import type { SessionUser } from "@bolder/auth";
 import { authRoutes } from "./modules/auth/auth.routes.js";
 import { homeRoutes } from "./modules/home/home.routes.js";
@@ -8,6 +9,7 @@ import { scheduleRoutes } from "./modules/schedule/schedule.stub.js";
 import { tasksRoutes } from "./modules/tasks/tasks.stub.js";
 import { wikiRoutes } from "./modules/wiki/wiki.stub.js";
 import { errorHandler } from "./middleware/error.js";
+import { env } from "./env.js";
 
 /** Hono variables available on every request. */
 export type AppEnv = {
@@ -22,6 +24,20 @@ export type AppEnv = {
 export const app = new Hono<AppEnv>()
   .basePath("/api")
   .onError(errorHandler)
+  // The register form and the invite check are called straight from the
+  // browser, so they are cross-origin requests carrying a JSON content type
+  // and are therefore preflighted. Without CORS the browser blocks both.
+  // The web origin is the only origin allowed.
+  .use(
+    "*",
+    cors({
+      origin: env.NEXTAUTH_URL,
+      allowHeaders: ["Content-Type", "Authorization"],
+      allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+      credentials: true,
+      maxAge: 600,
+    }),
+  )
   .get("/health", (c) => c.json({ ok: true }))
   .route("/auth", authRoutes)
   .route("/projects", projectsRoutes)

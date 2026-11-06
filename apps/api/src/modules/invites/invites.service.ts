@@ -124,18 +124,11 @@ export function validateInvite(rawCode: string): InviteValidation {
 }
 
 /**
- * Internal redemption, called by the auth module during registration. The
- * caller is unauthenticated by definition, so there is no `AuthContext` here.
- *
- * The role comes from the invite row — never from the request payload.
+ * Resolves a code to a redeemable invite row, throwing a specific error for
+ * every non-redeemable state. Read-only — it never touches the invite.
  */
-export function redeemInvite(input: {
-  code: string;
-  email: string;
-  name: string;
-  passwordHash: string;
-}) {
-  const row = invitesRepo.findByCode(normalizeInviteCode(input.code));
+function loadRedeemableInvite(rawCode: string): InviteRow {
+  const row = invitesRepo.findByCode(normalizeInviteCode(rawCode));
   if (!row) {
     throw new ApiError(ErrorCode.VALIDATION, "Invitation code is not valid.");
   }
@@ -154,16 +147,54 @@ export function redeemInvite(input: {
     throw new ApiError(ErrorCode.VALIDATION, "This invitation has expired.");
   }
 
-  const result = invitesRepo.claimAndCreateUser({
-    inviteId: row.id,
-    now: Date.now(),
-    user: {
-      email: input.email,
-      name: input.name,
-      role: row.role,
-      passwordHash: input.passwordHash,
-    },
-  });
+  return row;
+}
+
+/**
+ * Read-only redeemability check so `register` can reject a bad code *before*
+ * it consults the user table or hashes a password. Validating first keeps an
+ * unauthenticated caller from using registration to probe which emails exist,
+ * and stops invalid codes from burning CPU in scrypt.
+ */
+export function assertInviteRedeemable(rawCode: string): void {
+  loadRedeemableInvite(rawCode);
+}
+
+/**
+ * Internal redemption, called by the auth module during registration. The
+ * caller is unauthenticated by definition, so there is no `AuthContext` here.
+ *
+ * The role comes from the invite row — never from the request payload.
+ */
+export function redeemInvite(input: {
+  code: string;
+  email: string;
+  name: string;
+  passwordHash: string;
+}) {
+  const row = loadRedeemableInvite(input.code);
+
+  let result: ReturnType<typeof invitesRepo.claimAndCreateUser>;
+  try {
+    result = invitesRepo.claimAndCreateUser({
+      inviteId: row.id,
+      now: Date.now(),
+      user: {
+        email: input.email,
+        name: input.name,
+        role: row.role,
+        passwordHash: input.passwordHash,
+      },
+    });
+  } catch (error) {
+    // Two concurrent registrations can both pass the pre-insert email check;
+    // the loser trips the unique constraint. The transaction has rolled back,
+    // so the invite was NOT burned — report the conflict instead of a 500.
+    if (isUniqueViolation(error)) {
+      throw new ApiError(ErrorCode.CONFLICT, "Email already registered.");
+    }
+    throw error;
+  }
 
   if (!result) {
     throw new ApiError(
