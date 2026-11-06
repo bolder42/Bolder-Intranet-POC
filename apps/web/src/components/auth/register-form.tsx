@@ -141,7 +141,7 @@ export function RegisterForm() {
 
   return (
     <form className="auth-form" onSubmit={handleSubmit} aria-label="Create account">
-      <div>
+      <div className="auth-form-heading">
         <h2 className="auth-section-title">Create account</h2>
         <p className="auth-section-subtitle">Join the Bolder Intranet.</p>
       </div>

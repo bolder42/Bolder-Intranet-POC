@@ -1,13 +1,10 @@
-:root {
-  --auth-form-max-width: 420px;
-}
-
 /* --------------------------------------------------------------------------
-   Auth shell — full-bleed document layout that mirrors the app dashboard.
+   Auth shell — centered full-bleed document layout.
    One of the three locked UI shells; no card, no box-shadow on surfaces.
    -------------------------------------------------------------------------- */
 
 .auth-shell {
+  position: relative;
   min-height: 100vh;
   padding: 0 24px;
   background: var(--color-canvas);
@@ -15,48 +12,30 @@
 }
 
 .auth-shell-inner {
-  position: relative;
-  max-width: 840px;
+  max-width: 440px;
   margin: 0 auto;
-  padding: 80px 0 40px;
+  padding: 112px 0 48px;
   display: flex;
   flex-direction: column;
 }
 
+/* Page chrome, anchored to the viewport rather than the content column so it
+   does not drift toward the centre on wide screens. */
 .auth-theme-toggle {
   position: absolute;
-  top: 80px;
-  right: 0;
+  top: 20px;
+  right: 24px;
 }
 
-/* Header: workspace avatar motif + product name + descriptor. */
+/* Header: product name + descriptor, centered. */
 
 .auth-header {
   display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 48px;
-}
-
-.auth-brand {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 8px;
-  background: linear-gradient(135deg, #8c8c8c, #1f1f1f);
-  color: #ffffff;
-  font-size: 18px;
-  font-weight: 700;
-  flex-shrink: 0;
-}
-
-.auth-header-meta {
-  display: flex;
   flex-direction: column;
-  gap: 2px;
-  min-width: 0;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 40px;
+  text-align: center;
 }
 
 .auth-title {
@@ -80,7 +59,10 @@
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  max-width: var(--auth-form-max-width);
+}
+
+.auth-form-heading {
+  text-align: center;
 }
 
 .auth-section-title {
@@ -164,6 +146,7 @@
   margin: 8px 0 0;
   font-size: 13px;
   color: var(--color-text-muted);
+  text-align: center;
 }
 
 .auth-alt a {
@@ -180,9 +163,10 @@
 /* Footer line at the bottom of the content column. */
 
 .auth-footer {
-  padding-top: 72px;
+  padding-top: 64px;
   font-size: 12px;
   color: var(--color-text-subtle);
+  text-align: center;
 }
 
 /* --------------------------------------------------------------------------
@@ -195,16 +179,11 @@
   }
 
   .auth-shell-inner {
-    padding: 64px 0 48px;
+    padding: 88px 0 40px;
   }
 
   .auth-theme-toggle {
-    top: 20px;
-    right: 0;
-  }
-
-  .auth-header {
-    margin-bottom: 40px;
+    right: 16px;
   }
 
   .auth-title {
@@ -213,22 +192,8 @@
 }
 
 @media (max-width: 380px) {
-  .auth-shell {
-    padding: 0 16px;
-  }
-
   .auth-shell-inner {
-    padding: 56px 0 40px;
-  }
-
-  /* The toggle stays pinned top-right: dropping it into the flow pushed it
-     above the brand mark and read as a glitch at this width. */
-  .auth-theme-toggle {
-    top: 16px;
-  }
-
-  .auth-header {
-    flex-wrap: wrap;
+    padding: 80px 0 32px;
   }
 }
 

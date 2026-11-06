@@ -18,19 +18,14 @@ import "./auth.css";
 export default function AuthLayout({ children }: { children: ReactNode }) {
   return (
     <div className="auth-shell">
-      <div className="auth-shell-inner">
-        <div className="auth-theme-toggle">
-          <ThemeToggle />
-        </div>
+      <div className="auth-theme-toggle">
+        <ThemeToggle />
+      </div>
 
+      <div className="auth-shell-inner">
         <header className="auth-header">
-          <div className="auth-brand" aria-hidden="true">
-            B
-          </div>
-          <div className="auth-header-meta">
-            <h1 className="auth-title">Bolder Intranet</h1>
-            <p className="auth-subtitle">Your company knowledge and projects, in one place.</p>
-          </div>
+          <h1 className="auth-title">Bolder Intranet</h1>
+          <p className="auth-subtitle">Your company knowledge and projects, in one place.</p>
         </header>
 
         <main>{children}</main>

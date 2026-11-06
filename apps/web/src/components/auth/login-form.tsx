@@ -39,7 +39,7 @@ export function LoginForm() {
 
   return (
     <form className="auth-form" onSubmit={handleSubmit} aria-label="Sign in">
-      <div>
+      <div className="auth-form-heading">
         <h2 className="auth-section-title">Sign in</h2>
         <p className="auth-section-subtitle">Welcome back to the Bolder Intranet.</p>
       </div>
