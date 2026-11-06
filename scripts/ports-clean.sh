@@ -38,9 +38,33 @@ done
 #    hanging around (e.g. tsx watch that crashed its child). The patterns
 #    match substrings of the full command line (which includes package
 #    paths like `tsx@4.23.15/.../cli.mjs watch`), so use loose matches.
+#
+#    `pgrep -f` matches the WHOLE command line, so any shell whose own
+#    command line merely mentions one of these strings also matches — e.g.
+#    `bash scripts/ports-clean.sh; ps | grep next-server`, or a pipeline
+#    that inspects these processes. Killing that tears down the terminal
+#    that invoked the script. Two guards prevent the self-kill:
+#      1. never kill this process or any of its ancestors;
+#      2. only kill processes whose executable is actually node.
 if [[ -d /proc ]]; then
+  declare -A protected_pids=()
+  ancestor=$$
+  while [[ -n "$ancestor" && "$ancestor" != "0" ]]; do
+    protected_pids["$ancestor"]=1
+    ancestor="$(ps -o ppid= -p "$ancestor" 2>/dev/null | tr -d ' ')"
+  done
+
   pids="$(pgrep -f 'tsx@|next-server|next dev|turbo run dev' 2>/dev/null || true)"
   for pid in $pids; do
+    [[ -n "${protected_pids[$pid]:-}" ]] && continue
+
+    # A bash/sh wrapper is never the target; require a real node binary.
+    exe="$(readlink "/proc/$pid/exe" 2>/dev/null || true)"
+    case "$exe" in
+      */node|*/nodejs) ;;
+      *) continue ;;
+    esac
+
     cwd="$(readlink "/proc/$pid/cwd" 2>/dev/null || true)"
     case "$cwd" in
       "$REPO_ROOT"/*|"$REPO_ROOT")
