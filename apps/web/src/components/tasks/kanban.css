@@ -549,6 +549,9 @@
   line-height: 1.65;
   min-height: 200px;
   resize: vertical;
+  /* Long unbroken tokens (URLs, pasted IDs) must wrap at the box edge
+     instead of overflowing horizontally. */
+  overflow-wrap: anywhere;
 }
 
 .task-form textarea:focus,
@@ -796,6 +799,9 @@
 
 .markdown-body {
   color: var(--color-text-primary);
+  /* Same containment rule as the write box: a long unbroken string wraps
+     inside the description sheet instead of crossing its border. */
+  overflow-wrap: anywhere;
 }
 
 .markdown-body > *:first-child {
