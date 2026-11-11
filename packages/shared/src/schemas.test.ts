@@ -8,6 +8,7 @@ import {
   TaskStatusSchema,
   UpdateTaskSchema,
 } from "./tasks.js";
+import { UpdateMeSchema, UserProfileSchema } from "./users.js";
 
 describe("auth schemas", () => {
   it("validates a login payload", () => {
@@ -79,6 +80,37 @@ describe("task schemas", () => {
 
   it("accepts backlog as a move target", () => {
     expect(MoveTaskSchema.parse({ status: "backlog" }).status).toBe("backlog");
+  });
+});
+
+describe("user profile schemas", () => {
+  it("accepts a full profile including a null image", () => {
+    expect(
+      UserProfileSchema.safeParse({
+        id: 1,
+        email: "ada@bolder.local",
+        name: "Ada",
+        role: "dev",
+        image: null,
+      }).success,
+    ).toBe(true);
+  });
+
+  it("allows partial updates", () => {
+    expect(UpdateMeSchema.safeParse({}).success).toBe(true);
+    expect(UpdateMeSchema.parse({ name: "  Ada  " }).name).toBe("Ada");
+    expect(UpdateMeSchema.parse({ image: "" }).image).toBe("");
+  });
+
+  it("rejects empty or oversized names", () => {
+    expect(UpdateMeSchema.safeParse({ name: "   " }).success).toBe(false);
+    expect(UpdateMeSchema.safeParse({ name: "x".repeat(81) }).success).toBe(false);
+  });
+
+  it("rejects non-http image URLs, including script schemes", () => {
+    expect(UpdateMeSchema.safeParse({ image: "https://x.co/a.png" }).success).toBe(true);
+    expect(UpdateMeSchema.safeParse({ image: "javascript:alert(1)" }).success).toBe(false);
+    expect(UpdateMeSchema.safeParse({ image: "data:text/html,x" }).success).toBe(false);
   });
 });
 
