@@ -11,6 +11,7 @@ export interface AppShellUser {
   name?: string | null;
   email?: string | null;
   role?: string | null;
+  image?: string | null;
 }
 
 export interface AppShellProps {

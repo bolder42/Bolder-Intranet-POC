@@ -10,6 +10,8 @@ export const users = sqliteTable("users", {
   email: text("email").notNull().unique(),
   passwordHash: text("password_hash").notNull(),
   name: text("name").notNull(),
+  /** Public profile photo URL (http/https). Null = monogram avatar. */
+  image: text("image"),
   role: text("role", { enum: ["dev", "tech_lead", "admin"] })
     .notNull()
     .default("dev"),

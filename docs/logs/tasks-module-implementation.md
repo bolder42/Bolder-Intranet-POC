@@ -195,3 +195,47 @@ write; Admin auto-passes). Assignee must be a project member.
   widening (side effects on prose pages) and negative-margin breakout
   (fragile). Web tests 66/66, typecheck exit 0. Verified compiled into
   the live dev CSS bundle.
+- 2026-11-11 — **Description overflow fix.** Long unbroken tokens in the
+  task description punched through the write box and the markdown prose
+  (preview + detail sheet): added `overflow-wrap: anywhere` to
+  `.task-form textarea` and `.markdown-body` in kanban.css. Committed
+  `566f054 feat(tasks): fixed visualizer bug big description` and
+  pushed to `feat/tasks-visualizer` (PR #23).
+- 2026-11-11 — **Settings & profile page** (branch
+  `feat/settings_userpage`, waits for PR #23 to merge before opening).
+  New `/app/settings`, opened by clicking the sidebar workspace card
+  (now a link): display name, profile photo via pasted public http(s)
+  URL (no file upload — spec decision; monogram fallback), and an
+  EN | PT language switch. **PT is UI-only by spec** (button + "coming
+  soon" note, no state change); MODULES.md carries the note for whoever
+  implements i18n later. Backend: new `users` module
+  (GET/PATCH `/api/users/me`, bearer auth, own-profile only),
+  `users.image` column + migration 0005, shared `UserProfile` /
+  `UpdateMe` Zod schemas (http(s)-only URL, `""` clears the photo).
+  Sidebar profile is fetched fresh in the app layout (session fallback)
+  so name/photo changes appear without re-login. Validation: full
+  suite green — 195 tests (web 110, api 44, shared 23, auth 8, ui 7,
+  db 3), typecheck 0, lint 0; migrate + seed idempotent ×2; live API
+  round-trip (GET/PATCH/422 on `javascript:` URL/clear/revert) and
+  live page 200 with all sections; client-bundle check clean (no
+  `auth.config` in any client chunk — the NextAuth doc text in
+  layout.js is pre-existing via providers.tsx).
+- 2026-11-11 — **Photo not loading bug + Back button (owner report).**
+  Pasted image URLs (Pinterest/Wikipedia) never appeared — the page
+  rendered ZERO `<img>` tags. Root cause: `getProfileAction` called the
+  Hono RPC as `$get({ headers })`; for **param-less routes the client
+  treats the single object as route args and silently drops the
+  headers**, so the request arrived 401 → action returned null → both
+  sidebar and form fell back to the photo-less session profile.
+  (PATCH had the correct 2-arg shape, which is why saving "worked" but
+  nothing ever showed.) Fix: `$get({}, { headers })` — matching every
+  other call site in the repo — plus a regression test asserting the
+  call shape (`settings-actions.test.ts`). Also added a **Back**
+  button next to Save (`router.push('/app')`) with its test.
+  Network note discovered while diagnosing: from this machine,
+  Wikimedia `/thumb/` URLs return 400 (originals200), picsum/w3.org
+  200 — so some hosts/thumbnail paths may still refuse the load; the
+  settings preview degrades to the monogram via onError. Validation:
+  web 116 tests (+6), typecheck 0, lint 0; live page now renders both
+  `<img>` tags (sidebar + preview) with the photo URL; probe script
+  removed after use.

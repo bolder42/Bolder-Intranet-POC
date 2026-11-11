@@ -97,6 +97,27 @@ Always belongs to a project — it is not standalone.
 
 ---
 
+## Settings and profile
+
+Per-user settings page at `/app/settings`, opened by clicking the user's photo (workspace card) in the app sidebar.
+
+Each user can adjust their own profile:
+
+- **Display name** — shown on cards, comments and the sidebar.
+- **Profile photo** — set by pasting a public image URL (http/https; any image host, e.g. Pinterest or Imgur). No file upload in the POC; an empty URL removes the photo and the UI falls back to a monogram.
+
+Changes apply to the signed-in user only — there is no way to read or edit another user's profile (`GET/PATCH /api/users/me`).
+
+**Language:** the page shows a language switch with English and Portuguese. **English is the only implemented locale.** The Portuguese button exists but does not change anything yet. Whoever implements i18n later must wire that button to the chosen translation library, persist the user's choice, and translate the app copy (currently hardcoded English).
+
+Always belongs to a signed-in user — it is not standalone.
+
+**Each user can modify only their own profile.**
+
+**Requires WRITE and READ access to the database.**
+
+---
+
 ## Access summary
 
 | Module                  | Database access                              |
@@ -108,6 +129,7 @@ Always belongs to a project — it is not standalone.
 | Database                | (data layer)                                 |
 | Roles                   | (extends database auth/control — no direct DB access) |
 | Task view per project   | WRITE and READ                               |
+| Settings and profile    | WRITE and READ                               |
 
 ---
 
@@ -119,6 +141,7 @@ Always belongs to a project — it is not standalone.
 | Wiki per project        | Any project participant                      |
 | Schedule per project    | Tech Lead (global) or Admin                  |
 | Task view per project   | Any project participant                      |
+| Settings and profile    | Any signed-in user (own profile only)        |
 | Any operation           | Admin (always allowed, even if not explicit)  |
 
 ---

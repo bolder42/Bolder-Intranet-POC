@@ -15,6 +15,7 @@ export interface SidebarUser {
   name?: string | null;
   email?: string | null;
   role?: string | null;
+  image?: string | null;
 }
 
 export interface SidebarProps {
@@ -24,15 +25,20 @@ export interface SidebarProps {
 function WorkspaceCard({ user }: { user: SidebarUser }) {
   const displayName = user.name ?? user.email ?? 'Workspace';
   const initial = displayName.charAt(0).toUpperCase();
+  const photo = user.image && /^https?:\/\//.test(user.image) ? user.image : null;
 
   return (
-    <div className="workspace-card">
-      <div className="workspace-avatar">{initial}</div>
+    <Link href="/app/settings" className="workspace-card" aria-label="Open settings">
+      {photo ? (
+        <img className="workspace-avatar workspace-avatar-img" src={photo} alt="" />
+      ) : (
+        <div className="workspace-avatar">{initial}</div>
+      )}
       <div className="workspace-meta">
         <span className="workspace-name">{displayName}</span>
         <span className="workspace-role">{getRoleLabel(user.role)}</span>
       </div>
-    </div>
+    </Link>
   );
 }
 
