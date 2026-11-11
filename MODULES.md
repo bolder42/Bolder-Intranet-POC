@@ -85,6 +85,10 @@ Clear visualization of tasks within the project, progress, and the people respon
 
 Shows work units (tasks) and status.
 
+The board has four stages — Backlog, To Do, Doing, Done — and each task carries a priority (Low, Medium, or High; Medium by default).
+
+Every task status change is recorded — who changed it, when, and from which status to which status — so that cycle time can be analyzed later.
+
 Always belongs to a project — it is not standalone.
 
 **All participants of a project can modify the task view.**
