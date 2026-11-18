@@ -10,6 +10,7 @@ export interface TaskAssignee {
   name: string;
   email: string;
   role: UserPublic["role"];
+  image: string | null;
 }
 
 export interface TaskListItem {

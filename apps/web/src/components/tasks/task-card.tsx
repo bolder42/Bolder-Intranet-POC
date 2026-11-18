@@ -5,6 +5,7 @@ import type { TaskStatus } from "@bolder/shared";
 
 import type { TaskListItem } from "./task-types";
 import { PRIORITY_LABELS, STATUS_COLUMNS } from "./task-utils";
+import { UserAvatar } from "@/components/user/user-avatar";
 
 export interface TaskCardProps {
   task: TaskListItem;
@@ -19,10 +20,11 @@ export interface TaskCardProps {
 /**
  * A single kanban card.
  *
- * The card is intentionally quiet: task number, title and the priority
- * flag — the description lives in the detail view, not on the board. The
- * status select is the keyboard-accessible way to move the card between
- * columns and performs the same move as drag-and-drop.
+ * Layout: task number + assignee photo(s) in the top row, title, then the
+ * priority flag below the title. The description and dates live in the
+ * detail view, not on the board. The status select is the
+ * keyboard-accessible way to move the card between columns and performs
+ * the same move as drag-and-drop.
  */
 export function TaskCard({ task, number, dragging, onDragStart, onMove, onOpen }: TaskCardProps) {
   const priority = task.priority ?? "medium";
@@ -51,10 +53,21 @@ export function TaskCard({ task, number, dragging, onDragStart, onMove, onOpen }
       onClick={handleCardClick}
       aria-label={task.title}
     >
-      <div className="task-card-top">
-        {number > 0 ? <span className="task-card-number">#{number}</span> : null}
-        <span className={`task-priority task-priority-${priority}`}>{PRIORITY_LABELS[priority]}</span>
-      </div>
+      {number > 0 || task.assignee ? (
+        <div className="task-card-top">
+          {number > 0 ? <span className="task-card-number">#{number}</span> : null}
+          {task.assignee ? (
+            <span
+              className="task-card-assignees"
+              role="img"
+              aria-label={`Assigned to ${task.assignee.name}`}
+              title={task.assignee.name}
+            >
+              <UserAvatar name={task.assignee.name} image={task.assignee.image} size={27} />
+            </span>
+          ) : null}
+        </div>
+      ) : null}
       <h3 className="task-card-heading">
         <button
           type="button"
@@ -71,6 +84,7 @@ export function TaskCard({ task, number, dragging, onDragStart, onMove, onOpen }
           →
         </span>
       </h3>
+      <span className={`task-priority task-priority-${priority}`}>{PRIORITY_LABELS[priority]}</span>
       <label className="task-card-move" onClick={(event) => event.stopPropagation()}>
         <span>Move to</span>
         <select

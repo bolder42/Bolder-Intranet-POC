@@ -11,7 +11,7 @@ it("shows a compact team summary and expandable public participant details", () 
           projectId: 1,
           userId: 2,
           joinedAt: 0,
-          user: { id: 2, name: "Ada", email: "ada@bolder.local", role: "dev" },
+          user: { id: 2, name: "Ada", email: "ada@bolder.local", role: "dev", image: null },
         },
       ]}
     />,
@@ -21,4 +21,31 @@ it("shows a compact team summary and expandable public participant details", () 
   expect(details).not.toHaveAttribute("open");
   fireEvent.click(summary);
   expect(screen.getByText(/ada@bolder.local/)).toBeInTheDocument();
+  // Monogram avatar next to the name (no photo set on this fixture).
+  expect(document.querySelector(".user-avatar")).toHaveTextContent("A");
+});
+
+it("renders the participant photo when one is set", () => {
+  render(
+    <Participants
+      members={[
+        {
+          id: 1,
+          projectId: 1,
+          userId: 2,
+          joinedAt: 0,
+          user: {
+            id: 2,
+            name: "Ada",
+            email: "ada@bolder.local",
+            role: "dev",
+            image: "https://x.co/ada.png",
+          },
+        },
+      ]}
+    />,
+  );
+
+  const photo = document.querySelector("img.user-avatar");
+  expect(photo).toHaveAttribute("src", "https://x.co/ada.png");
 });

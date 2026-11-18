@@ -5,7 +5,7 @@ import type { BoardMember } from "./task-types";
 import { TaskForm } from "./task-form";
 
 const members: BoardMember[] = [
-  { user: { id: 1, name: "Ada Lovelace", email: "ada@bolder.local", role: "dev" } },
+  { user: { id: 1, name: "Ada Lovelace", email: "ada@bolder.local", role: "dev", image: null } },
 ];
 
 function renderCreate(onSubmit: (values: unknown) => void = vi.fn()) {

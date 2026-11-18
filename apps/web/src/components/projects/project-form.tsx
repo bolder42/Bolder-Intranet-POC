@@ -3,6 +3,7 @@ import { useActionState } from "react";
 import { Button, Input } from "@bolder/ui";
 import type { Project, UserPublic } from "@bolder/shared";
 import { saveProject } from "@/app/app/projects/actions";
+import { UserAvatar } from "@/components/user/user-avatar";
 export function ProjectForm({
   project,
   candidates = [],
@@ -39,6 +40,7 @@ export function ProjectForm({
           {candidates.map((user) => (
             <label key={user.id} className="participant-option">
               <input type="checkbox" name="memberIds" value={user.id} />
+              <UserAvatar name={user.name} image={user.image} size={20} />
               {user.name} — {user.role}
             </label>
           ))}

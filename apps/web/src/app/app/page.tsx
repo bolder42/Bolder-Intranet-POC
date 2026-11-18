@@ -3,7 +3,6 @@ import type { HomeSummary, Project } from '@bolder/shared';
 import { auth } from '@/auth';
 import {
   DashboardHeader,
-  FloatingToolbar,
   NotesGrid,
   ProjectsWidget,
   QuickLinksCallout,
@@ -132,11 +131,6 @@ export default async function HomePage() {
           </p>
         ) : null}
       </section>
-
-      <FloatingToolbar
-        userName={me?.name ?? me?.email ?? 'User'}
-        userRole={me?.role ?? null}
-      />
     </>
   );
 }

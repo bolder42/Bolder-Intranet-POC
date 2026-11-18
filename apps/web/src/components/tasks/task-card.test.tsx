@@ -47,7 +47,7 @@ describe("TaskCard", () => {
 
     const card = screen.getByRole("article", { name: "Build the board" });
     expect(within(card).queryByText("#0")).not.toBeInTheDocument();
-    // The priority flag stays on the right of the card.
+    // The priority flag sits below the title when there is no number row.
     expect(within(card).getByText("High")).toHaveClass("task-priority-high");
   });
 
@@ -55,5 +55,39 @@ describe("TaskCard", () => {
     renderCard();
     const card = screen.getByRole("article", { name: "Build the board" });
     expect(within(card).queryByText("Plan")).not.toBeInTheDocument();
+  });
+
+  it("shows the assignee photo in the top-right, with the priority flag below the title", () => {
+    renderCard({
+      assigneeId: 1,
+      assignee: {
+        id: 1,
+        name: "Ada Lovelace",
+        email: "ada@bolder.local",
+        role: "dev",
+        image: "https://x.co/ada.png",
+      },
+    });
+
+    const card = screen.getByRole("article", { name: "Build the board" });
+    const avatar = card.querySelector(".task-card-assignees");
+    expect(avatar).not.toBeNull();
+    expect(avatar).toHaveAttribute("aria-label", "Assigned to Ada Lovelace");
+    expect(card.querySelector("img.user-avatar")).toHaveAttribute(
+      "src",
+      "https://x.co/ada.png",
+    );
+
+    // DOM order: top row (number + photo) → title → priority flag.
+    const title = within(card).getByText("Build the board");
+    const flag = within(card).getByText("High");
+    expect(avatar!.compareDocumentPosition(title) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(title.compareDocumentPosition(flag) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it("omits the avatar when nobody is assigned", () => {
+    const { container } = renderCard();
+
+    expect(container.querySelector(".task-card-assignees")).toBeNull();
   });
 });

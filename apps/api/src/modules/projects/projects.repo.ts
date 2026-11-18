@@ -17,7 +17,13 @@ import {
 export const projectsRepo = {
   candidates() {
     return getDb()
-      .select({ id: users.id, name: users.name, email: users.email, role: users.role })
+      .select({
+        id: users.id,
+        name: users.name,
+        email: users.email,
+        role: users.role,
+        image: users.image,
+      })
       .from(users)
       .all();
   },
@@ -66,7 +72,13 @@ export const projectsRepo = {
         projectId: projectMembers.projectId,
         userId: projectMembers.userId,
         joinedAt: projectMembers.joinedAt,
-        user: { id: users.id, name: users.name, email: users.email, role: users.role },
+        user: {
+          id: users.id,
+          name: users.name,
+          email: users.email,
+          role: users.role,
+          image: users.image,
+        },
       })
       .from(projectMembers)
       .innerJoin(users, eq(users.id, projectMembers.userId))

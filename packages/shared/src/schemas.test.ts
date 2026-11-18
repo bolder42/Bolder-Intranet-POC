@@ -27,9 +27,29 @@ describe("auth schemas", () => {
 
   it("rejects a public user without a known role", () => {
     expect(
-      UserPublicSchema.safeParse({ id: 1, name: "x", email: "x@y.co", role: "owner" })
-        .success,
+      UserPublicSchema.safeParse({
+        id: 1,
+        name: "x",
+        email: "x@y.co",
+        role: "owner",
+        image: null,
+      }).success,
     ).toBe(false);
+  });
+
+  it("requires the image field on a public user", () => {
+    expect(
+      UserPublicSchema.safeParse({ id: 1, name: "x", email: "x@y.co", role: "dev" }).success,
+    ).toBe(false);
+    expect(
+      UserPublicSchema.safeParse({
+        id: 1,
+        name: "x",
+        email: "x@y.co",
+        role: "dev",
+        image: "https://x.co/a.png",
+      }).success,
+    ).toBe(true);
   });
 });
 

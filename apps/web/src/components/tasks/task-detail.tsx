@@ -5,6 +5,7 @@ import { Button } from "@bolder/ui";
 
 import { Markdown } from "./markdown";
 import type { TaskListItem } from "./task-types";
+import { UserAvatar } from "@/components/user/user-avatar";
 import {
   dueTone,
   formatCreatedAt,
@@ -95,7 +96,16 @@ export function TaskDetail({ task, number, onEdit, onClose }: TaskDetailProps) {
             </div>
             <div className="task-detail-fact">
               <dt>Assignee</dt>
-              <dd>{task.assignee ? task.assignee.name : "Unassigned"}</dd>
+              <dd>
+                {task.assignee ? (
+                  <>
+                    <UserAvatar name={task.assignee.name} image={task.assignee.image} size={20} />
+                    <span>{task.assignee.name}</span>
+                  </>
+                ) : (
+                  "Unassigned"
+                )}
+              </dd>
             </div>
             <div className="task-detail-fact">
               <dt>Due date</dt>
