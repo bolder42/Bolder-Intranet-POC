@@ -8,7 +8,7 @@ import { projectsRoutes } from "./modules/projects/projects.routes.js";
 import { scheduleRoutes } from "./modules/schedule/schedule.stub.js";
 import { tasksRoutes } from "./modules/tasks/tasks.routes.js";
 import { usersRoutes } from "./modules/users/users.routes.js";
-import { wikiRoutes } from "./modules/wiki/wiki.stub.js";
+import { wikiRoutes } from "./modules/wiki/wiki.routes.js";
 import { errorHandler } from "./middleware/error.js";
 import { env } from "./env.js";
 

@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { index, integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 import { projects } from "./projects.js";
 import { users } from "./users.js";
 
@@ -15,14 +15,15 @@ export const wikiPages = sqliteTable(
       .references(() => projects.id, { onDelete: "cascade" }),
     title: text("title").notNull(),
     content: text("content").notNull().default(""),
-    authorId: integer("author_id", { mode: "number" }).references(
-      () => users.id,
-    ),
+    authorId: integer("author_id", { mode: "number" }).references(() => users.id),
     updatedAt: integer("updated_at", { mode: "number" })
       .notNull()
       .default(sql`(unixepoch() * 1000)`),
   },
-  (table) => [index("wiki_pages_project_id_idx").on(table.projectId)],
+  (table) => [
+    index("wiki_pages_project_id_idx").on(table.projectId),
+    uniqueIndex("wiki_pages_project_title_unique").on(table.projectId, table.title),
+  ],
 );
 
 export type WikiPage = typeof wikiPages.$inferSelect;
