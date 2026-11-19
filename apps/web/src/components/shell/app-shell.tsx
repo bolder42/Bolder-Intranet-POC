@@ -37,6 +37,7 @@ export function AppShell({ user, children }: AppShellProps) {
         <Header
           collapsed={collapsed}
           onToggleSidebar={() => setCollapsed((prev) => !prev)}
+          user={user}
         />
         <main className="app-content">{children}</main>
       </div>

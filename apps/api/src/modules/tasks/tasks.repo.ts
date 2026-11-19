@@ -29,6 +29,7 @@ const ASSIGNEE_COLUMNS = {
   name: users.name,
   email: users.email,
   role: users.role,
+  image: users.image,
 } as const;
 
 /** Event columns returned by the audit-trail read. */

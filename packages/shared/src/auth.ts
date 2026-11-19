@@ -20,6 +20,8 @@ export const UserPublicSchema = z.object({
   name: z.string(),
   email: z.email(),
   role: RoleSchema,
+  /** Public profile photo URL; null = the UI shows a monogram instead. */
+  image: z.string().nullable(),
 });
 export type UserPublic = z.infer<typeof UserPublicSchema>;
 

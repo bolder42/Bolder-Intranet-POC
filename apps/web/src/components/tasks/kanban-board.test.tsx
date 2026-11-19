@@ -30,8 +30,8 @@ function task(overrides: Partial<TaskListItem> & { id: number; title: string }):
 }
 
 const members: BoardMember[] = [
-  { user: { id: 1, name: "Ada Lovelace", email: "ada@bolder.local", role: "dev" } },
-  { user: { id: 2, name: "Grace Hopper", email: "grace@bolder.local", role: "dev" } },
+  { user: { id: 1, name: "Ada Lovelace", email: "ada@bolder.local", role: "dev", image: null } },
+  { user: { id: 2, name: "Grace Hopper", email: "grace@bolder.local", role: "dev", image: null } },
 ];
 
 // Ids deliberately differ from the per-project numbers the board shows:
@@ -46,7 +46,7 @@ const initialTasks: TaskListItem[] = [
     priority: "high",
     description: "## Plan\n\n- wire the board\n- **ship** it",
     assigneeId: 1,
-    assignee: { id: 1, name: "Ada Lovelace", email: "ada@bolder.local", role: "dev" },
+    assignee: { id: 1, name: "Ada Lovelace", email: "ada@bolder.local", role: "dev", image: null },
   }),
   task({ id: 12, title: "Ship the demo", status: "done", priority: "low" }),
 ];
@@ -103,16 +103,18 @@ describe("KanbanBoard", () => {
     expect(screen.getByText(/1 backlog.*1 to do.*1 doing.*1 done/)).toBeInTheDocument();
   });
 
-  it("keeps the card to the task number, the title and the priority flag", () => {
+  it("keeps the card to the task number, the title, the priority flag and the assignee photo", () => {
     renderBoard();
 
     const card = screen.getByRole("article", { name: "Build the board" });
     expect(within(card).getByText("#2")).toBeInTheDocument();
     expect(within(card).getByText("High")).toBeInTheDocument();
-    // The description, the assignee and the dates live in the detail view.
+    // The description, the assignee's NAME and the dates live in the detail
+    // view — the card only shows the photo (or monogram) avatar.
     expect(within(card).queryByText("Plan")).not.toBeInTheDocument();
     expect(within(card).queryByText("Ada Lovelace")).not.toBeInTheDocument();
     expect(within(card).queryByText(/Due/)).not.toBeInTheDocument();
+    expect(card.querySelector(".task-card-assignees")).not.toBeNull();
   });
 
   it("numbers the cards by their creation order inside the project, not by id", () => {
@@ -155,15 +157,15 @@ describe("KanbanBoard", () => {
     expect(within(column("Done")).getByText("#3")).toBeInTheDocument();
   });
 
-  it("puts the task number and the priority flag above the title", () => {
+  it("puts the task number above the title and the priority flag below it", () => {
     renderBoard();
 
     const card = screen.getByRole("article", { name: "Build the board" });
     const number = within(card).getByText("#2");
     const badge = within(card).getByText("High");
     const title = within(card).getByText("Build the board");
-    expect(number.compareDocumentPosition(badge)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
-    expect(badge.compareDocumentPosition(title)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+    expect(number.compareDocumentPosition(title)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+    expect(title.compareDocumentPosition(badge)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
   });
 
   it("shows a priority badge with the right tone on every card", () => {

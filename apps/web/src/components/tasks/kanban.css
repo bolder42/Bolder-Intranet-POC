@@ -206,9 +206,10 @@
 
 /* Cards
    ------------------------------------------------------------------
-   The card is a scannable index entry: task number, title, priority
-   flag. Everything else (description, assignee, dates) lives in the
-   detail view, so a column of twenty cards stays readable. */
+   The card is a scannable index entry: task number, priority flag,
+   the assignee's photo and the title. The description and the dates
+   live in the detail view, so a column of twenty cards stays
+   readable. */
 
 .task-card {
   min-width: 0;
@@ -223,6 +224,17 @@
   cursor: pointer;
   transition: border-color 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease,
     transform 0.15s ease;
+}
+
+/* Assignee photo(s): top-right corner of the card — the slot the priority
+   flag used to occupy. The model has one assignee per task today; the
+   flex row lays several side by side should that ever change. */
+.task-card-assignees {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+  line-height: 0;
 }
 
 .task-card:hover {
@@ -258,11 +270,6 @@
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
-}
-
-/* The priority flag always sits on the right, even without a number. */
-.task-card-top .task-priority {
-  margin-left: auto;
 }
 
 .task-card-number {

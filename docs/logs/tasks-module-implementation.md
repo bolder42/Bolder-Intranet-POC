@@ -220,6 +220,34 @@ write; Admin auto-passes). Assignee must be a project member.
   live page 200 with all sections; client-bundle check clean (no
   `auth.config` in any client chunk — the NextAuth doc text in
   layout.js is pre-existing via providers.tsx).
+- 2026-11-18 — **Profile photo everywhere (owner task).** New reusable
+  `UserAvatar` component (`components/user/`, photo → first-letter
+  monogram fallback, size prop) applied at: project participants list
+  (projects list + detail), the home floating-toolbar account avatar,
+  the task-detail assignee fact, project-form participant checkboxes,
+  and — final owner ask — the **app top bar next to the theme toggle**
+  (link to /app/settings; header now receives the user from AppShell).
+  Backend: `UserPublicSchema` gained required `image` — all four
+  producers updated (auth toPublic, project candidates, project
+  members, task assignee columns) + `TaskAssignee` web type. Validation:
+  full suite 212 tests, typecheck 0, lint 0; live: API returns image in
+  every shape, dashboard toolbar renders <img>, project 28 shows the
+  admin photo as participant (monograms elsewhere), header shows the
+  avatar link after the theme toggle. Also restored MODULES.md — it
+  had been overwritten with unrelated FinanceFlow content (user chose
+  git restore; verified Settings section intact).
+- 2026-11-18 — **Owner follow-ups.** (1) Avatar added to the app top
+  bar beside the theme toggle (header now receives the user from
+  AppShell; links to /app/settings). (2) Floating toolbar removed from
+  the dashboard entirely — component, tests, home/index export, its
+  CSS block and the `--toolbar-pill-height` var (sign-out still lives
+  in the sidebar; top-bar avatar keeps identity visible). (3) Assignee
+  photo now on the task card: top-left, right under the priority-flag
+  row (`role="img"` + title tooltip; omitted when unassigned). Validation
+  each step: web tests 126 → 119 → 121, typecheck 0, lint 0; live HTML
+  confirmed (dashboard without floating-toolbar, header avatar present,
+  board shows 5/7 cards with avatars — 1 photo + 4 monograms, 2
+  unassigned with none).
 - 2026-11-11 — **Photo not loading bug + Back button (owner report).**
   Pasted image URLs (Pinterest/Wikipedia) never appeared — the page
   rendered ZERO `<img>` tags. Root cause: `getProfileAction` called the

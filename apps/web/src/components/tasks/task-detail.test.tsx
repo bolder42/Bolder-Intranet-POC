@@ -17,7 +17,7 @@ function task(overrides: Partial<TaskListItem> = {}): TaskListItem {
     assigneeId: 1,
     dueAt: null,
     createdAt: Date.UTC(2026, 9, 1),
-    assignee: { id: 1, name: "Ada Lovelace", email: "ada@bolder.local", role: "dev" },
+    assignee: { id: 1, name: "Ada Lovelace", email: "ada@bolder.local", role: "dev", image: null },
     ...overrides,
   };
 }
@@ -60,6 +60,30 @@ describe("TaskDetail", () => {
   it("says who owns the task when nobody is assigned", () => {
     renderDetail({ assigneeId: null, assignee: null });
     expect(screen.getByText("Unassigned")).toBeInTheDocument();
+  });
+
+  it("shows an avatar next to the assignee name, falling back to a monogram", () => {
+    const { container } = renderDetail();
+
+    const avatar = container.querySelector(".user-avatar");
+    expect(avatar).not.toBeNull();
+    expect(avatar).toHaveTextContent("A");
+    expect(container.querySelector("img")).toBeNull();
+  });
+
+  it("renders the assignee photo when there is one", () => {
+    const { container } = renderDetail({
+      assignee: {
+        id: 1,
+        name: "Ada Lovelace",
+        email: "ada@bolder.local",
+        role: "dev",
+        image: "https://x.co/ada.png",
+      },
+    });
+
+    const photo = container.querySelector("img.user-avatar");
+    expect(photo).toHaveAttribute("src", "https://x.co/ada.png");
   });
 
   it("marks an overdue due date with the danger token class", () => {
