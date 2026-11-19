@@ -113,3 +113,52 @@ export function paginate<T>(
 
   return { page: safePage, totalPages, items: items.slice(start, start + pageSize) };
 }
+
+/** Type filter shown in the Schedule toolbar. */
+export type ScheduleKindFilter = "all" | ScheduleItem["kind"];
+
+/**
+ * Applies the toolbar filters. The query is case-insensitive and matches both
+ * the title and the description; an empty query matches everything.
+ */
+export function filterScheduleItems(
+  items: ScheduleItem[],
+  kind: ScheduleKindFilter,
+  query: string,
+): ScheduleItem[] {
+  const needle = query.trim().toLowerCase();
+
+  return items.filter((item) => {
+    if (kind !== "all" && item.kind !== kind) return false;
+    if (!needle) return true;
+
+    return (
+      item.title.toLowerCase().includes(needle) ||
+      (item.description ?? "").toLowerCase().includes(needle)
+    );
+  });
+}
+
+/** Whole UTC days between the project deadline and the `yyyy-mm-dd` today key. */
+function deadlineDays(deadline: number, today: string): number {
+  const deadlineKey = toDateKey(deadline);
+  const start = Date.parse(`${today}T00:00:00Z`);
+  const end = Date.parse(`${deadlineKey}T00:00:00Z`);
+  return Math.round((end - start) / 86_400_000);
+}
+
+/** True when the read-only project deadline is strictly before today (UTC). */
+export function isDeadlineOverdue(deadline: number, today: string): boolean {
+  return deadlineDays(deadline, today) < 0;
+}
+
+/** Human-readable countdown, e.g. `12 days left`, `due today`, `3 days overdue`. */
+export function formatDeadlineRemaining(deadline: number, today: string): string {
+  const days = deadlineDays(deadline, today);
+
+  if (days === 0) return "due today";
+  if (days === 1) return "1 day left";
+  if (days > 1) return `${days} days left`;
+  if (days === -1) return "1 day overdue";
+  return `${Math.abs(days)} days overdue`;
+}

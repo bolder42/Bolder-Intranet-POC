@@ -3,8 +3,11 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildMonthGrid,
+  filterScheduleItems,
+  formatDeadlineRemaining,
   formatMonth,
   groupScheduleItems,
+  isDeadlineOverdue,
   paginate,
   SCHEDULE_PAGE_SIZE,
   toDateKey,
@@ -72,5 +75,57 @@ describe("paginate", () => {
 
   it("defaults to five entries per page", () => {
     expect(SCHEDULE_PAGE_SIZE).toBe(5);
+  });
+});
+
+describe("filterScheduleItems", () => {
+  const items: ScheduleItem[] = [
+    item({ id: 1, kind: "milestone", dueAt: Date.UTC(2026, 10, 10), title: "Beta release" }),
+    item({ id: 2, kind: "deadline", dueAt: Date.UTC(2026, 10, 12), title: "Ship it" }),
+    item({
+      id: 3,
+      kind: "milestone",
+      dueAt: Date.UTC(2026, 10, 14),
+      title: "Review",
+      description: "Internal sign-off",
+    }),
+  ];
+
+  it("keeps every item for the default filters", () => {
+    expect(filterScheduleItems(items, "all", "")).toEqual(items);
+    expect(filterScheduleItems(items, "all", "  ")).toEqual(items);
+  });
+
+  it("filters by kind", () => {
+    expect(filterScheduleItems(items, "milestone", "").map((entry) => entry.id)).toEqual([1, 3]);
+    expect(filterScheduleItems(items, "deadline", "").map((entry) => entry.id)).toEqual([2]);
+  });
+
+  it("matches title and description case-insensitively and combines with kind", () => {
+    expect(filterScheduleItems(items, "all", "BETA").map((entry) => entry.id)).toEqual([1]);
+    expect(filterScheduleItems(items, "all", "sign-off").map((entry) => entry.id)).toEqual([3]);
+    expect(filterScheduleItems(items, "milestone", "ship")).toEqual([]);
+  });
+});
+
+describe("deadline countdown", () => {
+  const today = "2026-11-06";
+
+  it("counts whole UTC days regardless of the deadline's time of day", () => {
+    const deadline = Date.UTC(2026, 10, 18, 23, 59);
+    expect(formatDeadlineRemaining(deadline, today)).toBe("12 days left");
+    expect(isDeadlineOverdue(deadline, today)).toBe(false);
+  });
+
+  it("handles today and singular/plural values", () => {
+    expect(formatDeadlineRemaining(Date.UTC(2026, 10, 6), today)).toBe("due today");
+    expect(formatDeadlineRemaining(Date.UTC(2026, 10, 7), today)).toBe("1 day left");
+    expect(formatDeadlineRemaining(Date.UTC(2026, 10, 5), today)).toBe("1 day overdue");
+    expect(formatDeadlineRemaining(Date.UTC(2026, 10, 3), today)).toBe("3 days overdue");
+  });
+
+  it("marks deadlines strictly before today as overdue", () => {
+    expect(isDeadlineOverdue(Date.UTC(2026, 10, 6), today)).toBe(false);
+    expect(isDeadlineOverdue(Date.UTC(2026, 10, 5), today)).toBe(true);
   });
 });

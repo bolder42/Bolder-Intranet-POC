@@ -4,7 +4,9 @@ import { useState } from "react";
 import type { ScheduleItem } from "@bolder/shared";
 import { Button } from "@/components/ui";
 
+import { filterScheduleItems, type ScheduleKindFilter } from "./format";
 import { ScheduleCalendar } from "./schedule-calendar";
+import { ScheduleFilters } from "./schedule-filters";
 import { ScheduleForm } from "./schedule-form";
 import { ScheduleList } from "./schedule-list";
 
@@ -24,6 +26,8 @@ export function ScheduleView({ projectId, items, today, canWrite }: ScheduleView
   const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState<ScheduleItem | null>(null);
   const [defaultDate, setDefaultDate] = useState<string | undefined>(undefined);
+  const [kindFilter, setKindFilter] = useState<ScheduleKindFilter>("all");
+  const [query, setQuery] = useState("");
 
   function closeForm() {
     setCreating(false);
@@ -44,16 +48,24 @@ export function ScheduleView({ projectId, items, today, canWrite }: ScheduleView
   }
 
   const formOpen = canWrite && (creating || editing !== null);
+  const visibleItems = filterScheduleItems(items, kindFilter, query);
+  const filtersActive = kindFilter !== "all" || query.trim() !== "";
 
   return (
     <div className="schedule">
-      {canWrite ? (
-        <div className="schedule-toolbar">
+      <div className="schedule-toolbar">
+        <ScheduleFilters
+          kind={kindFilter}
+          query={query}
+          onKindChange={setKindFilter}
+          onQueryChange={setQuery}
+        />
+        {canWrite ? (
           <Button type="button" onClick={() => startCreate()}>
             New item
           </Button>
-        </div>
-      ) : null}
+        ) : null}
+      </div>
 
       {formOpen ? (
         <ScheduleForm
@@ -66,18 +78,20 @@ export function ScheduleView({ projectId, items, today, canWrite }: ScheduleView
       ) : null}
 
       <ScheduleCalendar
-        items={items}
+        items={visibleItems}
         today={today}
         canCreate={canWrite}
         onSelectDay={(dateKey) => startCreate(dateKey)}
       />
 
       <ScheduleList
+        key={`${kindFilter}:${query}`}
         projectId={projectId}
-        items={items}
+        items={visibleItems}
         today={today}
         canWrite={canWrite}
         onEdit={startEdit}
+        filtersActive={filtersActive}
       />
     </div>
   );

@@ -886,7 +886,55 @@ summary { cursor: pointer; }
 
 .schedule-toolbar {
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.schedule-filters {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.schedule-filter-kinds {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.schedule-filter-kind {
+  padding: 0.35rem 0.65rem;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  font: inherit;
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+
+.schedule-filter-kind:hover {
+  border-color: var(--color-border-strong);
+}
+
+.schedule-filter-kind-active {
+  border-color: var(--color-blue);
+  color: var(--color-blue);
+  font-weight: 600;
+}
+
+.schedule-filter-search {
+  min-width: 12rem;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  font: inherit;
+  font-size: 0.85rem;
 }
 
 .schedule-deadline {
@@ -911,6 +959,18 @@ summary { cursor: pointer; }
 .schedule-deadline strong {
   color: var(--color-text-primary);
   font-size: 1.05rem;
+}
+
+.schedule-deadline-remaining {
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.schedule-deadline-overdue .schedule-deadline-remaining {
+  color: var(--color-danger);
+  font-weight: 600;
 }
 
 .schedule-form {
@@ -1076,6 +1136,12 @@ button.schedule-day:hover {
   color: var(--color-danger);
 }
 
+.schedule-list-count {
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+  font-weight: 400;
+}
+
 .schedule-items {
   list-style: none;
   margin: 0;
@@ -1149,9 +1215,15 @@ button.schedule-day:hover {
 }
 
 .schedule-delete {
-  display: inline-flex;
+  display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 0.5rem;
+}
+
+.schedule-delete-question {
+  font-size: 0.85rem;
+  color: var(--color-text-primary);
 }
 
 .schedule-pagination {

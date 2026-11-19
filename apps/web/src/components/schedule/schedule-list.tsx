@@ -24,12 +24,15 @@ export interface ScheduleListProps {
   today: string;
   canWrite?: boolean;
   onEdit?: (item: ScheduleItem) => void;
+  /** True when the toolbar filters are narrowing the list. */
+  filtersActive?: boolean;
 }
 
 /**
  * Grouped, paginated list view: overdue deadlines, upcoming items and past
- * milestones. Each group shows up to five entries per page; groups that fit on a
- * single page render no pager. Writers get inline edit + delete controls.
+ * milestones. Each group shows its total count and up to five entries per page;
+ * groups that fit on a single page render no pager. Writers get inline edit +
+ * delete controls.
  */
 export function ScheduleList({
   projectId,
@@ -37,11 +40,16 @@ export function ScheduleList({
   today,
   canWrite = false,
   onEdit,
+  filtersActive = false,
 }: ScheduleListProps) {
   const [pages, setPages] = useState<Record<SectionId, number>>(INITIAL_PAGES);
 
   if (items.length === 0) {
-    return <p className="schedule-empty">No milestones or deadlines yet.</p>;
+    return (
+      <p className="schedule-empty">
+        {filtersActive ? "No items match your filters." : "No milestones or deadlines yet."}
+      </p>
+    );
   }
 
   const groups = groupScheduleItems(items, today);
@@ -66,7 +74,7 @@ export function ScheduleList({
             <h2
               className={`schedule-list-title${section.overdue ? " schedule-list-title-overdue" : ""}`}
             >
-              {section.title}
+              {section.title} <span className="schedule-list-count">({section.items.length})</span>
             </h2>
             <ul className="schedule-items">
               {current.items.map((item) => (

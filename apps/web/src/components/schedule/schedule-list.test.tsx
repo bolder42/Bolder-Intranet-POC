@@ -50,9 +50,9 @@ function upcomingItems(count: number): ScheduleItem[] {
 it("groups items into overdue, upcoming and past sections", () => {
   render(<ScheduleList projectId="1" items={items} today="2026-11-06" />);
 
-  expect(screen.getByRole("heading", { name: "Overdue" })).toBeInTheDocument();
-  expect(screen.getByRole("heading", { name: "Upcoming" })).toBeInTheDocument();
-  expect(screen.getByRole("heading", { name: "Past" })).toBeInTheDocument();
+  expect(screen.getByRole("heading", { name: /^Overdue/ })).toBeInTheDocument();
+  expect(screen.getByRole("heading", { name: /^Upcoming/ })).toBeInTheDocument();
+  expect(screen.getByRole("heading", { name: /^Past/ })).toBeInTheDocument();
   expect(screen.getByText("Missed release")).toBeInTheDocument();
   expect(screen.getByText("Beta")).toBeInTheDocument();
   expect(screen.getByText("Kickoff done")).toBeInTheDocument();
@@ -95,6 +95,21 @@ it("paginates a group five entries at a time", () => {
 it("hides the pager when a group fits on one page", () => {
   render(<ScheduleList projectId="1" items={upcomingItems(5)} today="2026-11-06" />);
   expect(screen.queryByRole("navigation", { name: "Upcoming pagination" })).not.toBeInTheDocument();
+});
+
+it("shows the total count for a group, not the number shown on the page", () => {
+  render(<ScheduleList projectId="1" items={upcomingItems(7)} today="2026-11-06" />);
+
+  expect(screen.getByRole("heading", { name: /^Upcoming/ })).toHaveTextContent("(7)");
+  expect(screen.getByText("Upcoming 1")).toBeInTheDocument();
+  expect(screen.queryByText("Upcoming 6")).not.toBeInTheDocument();
+});
+
+it("shows a filtered empty state when filters hide every item", () => {
+  render(<ScheduleList projectId="1" items={[]} today="2026-11-06" filtersActive />);
+
+  expect(screen.getByText("No items match your filters.")).toBeInTheDocument();
+  expect(screen.queryByText("No milestones or deadlines yet.")).not.toBeInTheDocument();
 });
 
 it("clamps the page when the group shrinks", () => {

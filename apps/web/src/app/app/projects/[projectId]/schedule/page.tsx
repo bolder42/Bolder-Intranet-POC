@@ -1,6 +1,11 @@
 import { ProjectSchema, ScheduleListSchema } from "@bolder/shared";
 import { auth } from "@/auth";
-import { ScheduleView } from "@/components/schedule";
+import {
+  formatDate,
+  formatDeadlineRemaining,
+  isDeadlineOverdue,
+  ScheduleView,
+} from "@/components/schedule";
 import { api, getAuthHeaders } from "@/lib/api";
 
 export interface SchedulePageProps {
@@ -44,9 +49,14 @@ export default async function SchedulePage({ params }: SchedulePageProps) {
     return (
       <section>
         {deadline !== null ? (
-          <p className="schedule-deadline">
+          <p
+            className={`schedule-deadline${isDeadlineOverdue(deadline, today) ? " schedule-deadline-overdue" : ""}`}
+          >
             <span className="schedule-deadline-label">Project final deadline</span>
-            <strong>{new Date(deadline).toLocaleDateString("en-GB", { timeZone: "UTC" })}</strong>
+            <strong>{formatDate(deadline)}</strong>
+            <span className="schedule-deadline-remaining">
+              {formatDeadlineRemaining(deadline, today)}
+            </span>
           </p>
         ) : null}
 
