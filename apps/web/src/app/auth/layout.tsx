@@ -1,15 +1,39 @@
-import type { ReactNode } from 'react';
+import type { ReactNode } from "react";
 
-import './auth.css';
+import { ThemeToggle } from "@/components/shell/theme-toggle";
+
+// The App shell imports this from its own layout; the Auth shell must do the
+// same or the `Button`/`Input` primitives render as unstyled browser defaults.
+// Imported before auth.css so the auth-scoped overrides win.
+import "@bolder/ui/styles.css";
+import "./auth.css";
 
 /**
  * AUTH SHELL (one of the three locked UI shells).
- * Centered, full-viewport card used by /auth/login and /auth/register.
+ *
+ * Full-bleed document layout that mirrors the app dashboard: a centered
+ * content column with the brand mark top-left, the auth form below it, and
+ * a subtle footer at the bottom.
  */
 export default function AuthLayout({ children }: { children: ReactNode }) {
   return (
     <div className="auth-shell">
-      <div className="auth-card">{children}</div>
+      <div className="auth-theme-toggle">
+        <ThemeToggle />
+      </div>
+
+      <div className="auth-shell-inner">
+        <header className="auth-header">
+          <h1 className="auth-title">Bolder Intranet</h1>
+          <p className="auth-subtitle">Your company knowledge and projects, in one place.</p>
+        </header>
+
+        <main>{children}</main>
+
+        <footer className="auth-footer">
+          <p>Bolder Intranet · {new Date().getFullYear()}</p>
+        </footer>
+      </div>
     </div>
   );
 }

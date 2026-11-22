@@ -2,8 +2,10 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { vi } from "vitest";
-import type { Db } from "@bolder/db";
+import type { Db, Invite, NewInvite } from "@bolder/db";
 import type * as DbModule from "@bolder/db";
+import type { Role } from "@bolder/shared";
+import { generateInviteCode } from "../src/modules/invites/invite-code.js";
 
 /** Minimal shape of the Hono app used by tests. */
 export type TestApp = {
@@ -18,6 +20,9 @@ export type TestHarness = {
   dir: string;
   cleanup: () => void;
 };
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+const SEED_ADMIN_EMAIL = "seed-admin@bolder.local";
 
 /**
  * Boots an isolated API instance backed by a fresh SQLite file with the
@@ -50,16 +55,66 @@ export async function setupTestApp(): Promise<TestHarness> {
   };
 }
 
+/**
+ * Invites have a `created_by` FK, so a creator row must exist before any
+ * invite can be inserted. Tests start from an empty DB, so we lazily create
+ * one inert seed admin and reuse it afterwards.
+ */
+function seedAdminId(h: TestHarness): number {
+  const { users } = h.mod;
+  const existing = h.db.select().from(users).get();
+  if (existing) return existing.id;
+
+  const admin = h.db
+    .insert(users)
+    .values({
+      email: SEED_ADMIN_EMAIL,
+      name: "Seed Admin",
+      role: "admin",
+      // Inert placeholder: this account is never logged into.
+      passwordHash: "!seed-no-password",
+    })
+    .returning()
+    .get();
+
+  return admin.id;
+}
+
+/**
+ * Inserts an invite row directly (never via HTTP, which would be circular).
+ * Overrides let tests build expired / revoked / used / custom-role cases.
+ */
+export function seedInvite(
+  h: TestHarness,
+  overrides: Partial<NewInvite> = {},
+): Invite {
+  const { invites } = h.mod;
+  return h.db
+    .insert(invites)
+    .values({
+      code: generateInviteCode(),
+      role: "dev",
+      createdBy: seedAdminId(h),
+      expiresAt: Date.now() + 7 * DAY_MS,
+      ...overrides,
+    })
+    .returning()
+    .get();
+}
+
 const JSON_HEADERS = { "content-type": "application/json" };
 
 export async function registerUser(
-  app: TestApp,
-  input: { email: string; password: string; name: string; role: string },
+  h: TestHarness,
+  input: { email: string; password: string; name: string; role?: Role },
 ): Promise<{ token: string; user: { id: number; email: string; role: string } }> {
-  const res = await app.request("/api/auth/register", {
+  const invite = seedInvite(h, { role: input.role ?? "dev" });
+  const { email, password, name } = input;
+
+  const res = await h.app.request("/api/auth/register", {
     method: "POST",
     headers: JSON_HEADERS,
-    body: JSON.stringify(input),
+    body: JSON.stringify({ email, password, name, inviteCode: invite.code }),
   });
   if (res.status !== 201) {
     throw new Error(`registerUser failed: ${res.status} ${await res.text()}`);

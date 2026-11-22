@@ -7,3 +7,4 @@ export * from "./users.js";
 export * from "./wiki.js";
 export * from "./schedule.js";
 export * from "./home.js";
+export * from "./invites.js";

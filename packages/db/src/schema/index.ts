@@ -5,3 +5,4 @@ export * from "./tasks.js";
 export * from "./taskStatusEvents.js";
 export * from "./wiki.js";
 export * from "./schedule.js";
+export * from "./invites.js";

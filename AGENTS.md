@@ -65,6 +65,7 @@ The `.md` files in this repository are load-bearing for both humans onboarding a
 
 - **`AGENTS.md`** — when the change affects how AI agents must behave: new agent rules, new locked architectural decisions, new POC exclusions, or any update to the translation policy or testing rules in this file.
 - **`MODULES.md`** — when the change adds, renames, removes, or alters the scope of a module; when access rules (READ / WRITE / READ-ONLY) change; or when a module's relationship to `Projects` (its parent) changes. Follow the language policy in section 1 of this file.
+- **`DEFERRED.md`** — when you deliberately leave something unbuilt, or consciously accept a known limitation or security gap. Record what was deferred, why, and what exists in its place. Delete the entry when it ships. Deferrals must not live only in a PR description or a chat message.
 - **New `.md` file** — when the change introduces a concept the team needs to know (a new architectural pattern, a new workflow, a new constraint) and no existing file covers it. Create a new file rather than overloading an unrelated one.
 
 **`README.md` — narrow exception.** This file is human-authored. AI agents MAY modify it ONLY to add or update a "How to run the project" section: install command, dev/build/test commands, ports, environment variables, demo credentials. Every other part of `README.md` (project description, team notes, anything else) is human-owned and agents MUST NOT edit it.

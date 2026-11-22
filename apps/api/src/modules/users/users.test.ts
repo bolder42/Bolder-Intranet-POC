@@ -20,7 +20,7 @@ interface Profile {
 
 beforeEach(async () => {
   h = await setupTestApp();
-  const registered = await registerUser(h.app, {
+  const registered = await registerUser(h, {
     email: "ada@bolder.local",
     password: "password123",
     name: "Ada Lovelace",

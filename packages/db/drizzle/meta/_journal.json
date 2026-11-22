@@ -43,6 +43,13 @@
       "when": 1794420307737,
       "tag": "0005_cold_susan_delgado",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1795363882073,
+      "tag": "0006_groovy_skrulls",
+      "breakpoints": true
     }
   ]
 }

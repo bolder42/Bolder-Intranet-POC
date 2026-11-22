@@ -39,25 +39,25 @@ interface TaskItem {
 beforeEach(async () => {
   h = await setupTestApp();
 
-  const lead = await registerUser(h.app, {
+  const lead = await registerUser(h, {
     email: "lead@bolder.local",
     password: "password123",
     name: "Lead",
     role: "tech_lead",
   });
-  const otherLead = await registerUser(h.app, {
+  const otherLead = await registerUser(h, {
     email: "other@bolder.local",
     password: "password123",
     name: "Other",
     role: "tech_lead",
   });
-  const admin = await registerUser(h.app, {
+  const admin = await registerUser(h, {
     email: "admin@bolder.local",
     password: "password123",
     name: "Admin",
     role: "admin",
   });
-  const outsider = await registerUser(h.app, {
+  const outsider = await registerUser(h, {
     email: "outsider@bolder.local",
     password: "password123",
     name: "Outsider",
@@ -136,7 +136,7 @@ describe("tasks module", () => {
   });
 
   it("returns 404 for a task that does not belong to the project", async () => {
-    const other = await registerUser(h.app, {
+    const other = await registerUser(h, {
       email: "elsewhere@bolder.local",
       password: "password123",
       name: "Elsewhere",
@@ -316,7 +316,7 @@ describe("tasks module", () => {
   });
 
   it("updates fields and clears assignee and due date with explicit null", async () => {
-    const other = await registerUser(h.app, {
+    const other = await registerUser(h, {
       email: "assignee@bolder.local",
       password: "password123",
       name: "Assignee",
@@ -371,7 +371,7 @@ describe("tasks module", () => {
   });
 
   it("rejects assigning someone who is not a project member", async () => {
-    const outsiderUser = await registerUser(h.app, {
+    const outsiderUser = await registerUser(h, {
       email: "stranger@bolder.local",
       password: "password123",
       name: "Stranger",

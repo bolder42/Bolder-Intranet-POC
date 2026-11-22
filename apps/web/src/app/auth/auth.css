@@ -1,21 +1,59 @@
+/* --------------------------------------------------------------------------
+   Auth shell — centered full-bleed document layout.
+   One of the three locked UI shells; no card, no box-shadow on surfaces.
+   -------------------------------------------------------------------------- */
+
 .auth-shell {
+  position: relative;
   min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1.5rem;
-  background: var(--color-bg);
+  padding: 0 24px;
+  background: var(--color-canvas);
+  color: var(--color-text-primary);
 }
 
-.auth-card {
-  width: 100%;
-  max-width: 400px;
-  padding: 2rem;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: 12px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+.auth-shell-inner {
+  max-width: 440px;
+  margin: 0 auto;
+  padding: 112px 0 48px;
+  display: flex;
+  flex-direction: column;
 }
+
+/* Page chrome, anchored to the viewport rather than the content column so it
+   does not drift toward the centre on wide screens. */
+.auth-theme-toggle {
+  position: absolute;
+  top: 20px;
+  right: 24px;
+}
+
+/* Header: product name + descriptor, centered. */
+
+.auth-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 40px;
+  text-align: center;
+}
+
+.auth-title {
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  color: var(--color-text-primary);
+}
+
+.auth-subtitle {
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+/* --------------------------------------------------------------------------
+   Auth forms
+   -------------------------------------------------------------------------- */
 
 .auth-form {
   display: flex;
@@ -23,18 +61,146 @@
   gap: 1rem;
 }
 
-.auth-title {
-  font-size: 1.5rem;
+.auth-form-heading {
+  text-align: center;
 }
 
-.auth-subtitle {
-  color: var(--color-fg-muted);
-  font-size: 0.9rem;
-  margin-bottom: 0.5rem;
+.auth-section-title {
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--color-text-primary);
+}
+
+.auth-section-subtitle {
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+.auth-form-alert {
+  padding: 10px 12px;
+  border: 1px solid var(--color-danger);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--color-danger) 8%, transparent);
+  color: var(--color-danger);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.auth-invite-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 20px;
+  font-size: 13px;
+}
+
+.auth-invite-status--checking {
+  color: var(--color-text-muted);
+}
+
+.auth-invite-status--valid {
+  color: var(--color-green);
+}
+
+.auth-invite-status--invalid {
+  color: var(--color-danger);
+}
+
+/* The invite code is the gating element of the whole page, so it gets a
+   distinct treatment: tinted surface, stronger border, tracked monospace. */
+.auth-invite-input {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding-top: 0.62rem;
+  padding-bottom: 0.62rem;
+  background: var(--color-surface-tint);
+  border-color: var(--color-border-strong);
+}
+
+.auth-invite-input::placeholder {
+  color: var(--color-text-subtle);
+  font-weight: 500;
+  letter-spacing: 0.14em;
+}
+
+/* Inputs and the submit button share the system's 8px surface radius; the
+   shared primitive defaults to 6px, which reads as a mismatch next to them. */
+.auth-form .input {
+  border-radius: 8px;
+}
+
+.auth-submit {
+  width: 100%;
+  margin-top: 4px;
+  padding: 0.6rem 0.9rem;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
 }
 
 .auth-alt {
-  margin: 0;
-  font-size: 0.875rem;
-  color: var(--color-fg-muted);
+  margin: 8px 0 0;
+  font-size: 13px;
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+.auth-alt a {
+  color: var(--color-text-primary);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.auth-alt a:hover {
+  color: var(--color-text-muted);
+}
+
+/* Footer line at the bottom of the content column. */
+
+.auth-footer {
+  padding-top: 64px;
+  font-size: 12px;
+  color: var(--color-text-subtle);
+  text-align: center;
+}
+
+/* --------------------------------------------------------------------------
+   Responsive
+   -------------------------------------------------------------------------- */
+
+@media (max-width: 640px) {
+  .auth-shell {
+    padding: 0 16px;
+  }
+
+  .auth-shell-inner {
+    padding: 88px 0 40px;
+  }
+
+  .auth-theme-toggle {
+    right: 16px;
+  }
+
+  .auth-title {
+    font-size: 24px;
+  }
+}
+
+@media (max-width: 380px) {
+  .auth-shell-inner {
+    padding: 80px 0 32px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-shell,
+  .auth-form,
+  .auth-alt a {
+    transition: none;
+  }
 }

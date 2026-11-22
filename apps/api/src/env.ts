@@ -24,6 +24,8 @@ const EnvSchema = z.object({
   DATABASE_URL: z.string().default("./data/app.db"),
   JWT_SECRET: z.string().min(1).default("dev-insecure-secret-change-me"),
   API_PORT: z.coerce.number().int().positive().default(3001),
+  /** Public origin of the web app. The single allowed CORS origin. */
+  NEXTAUTH_URL: z.string().default("http://localhost:3000"),
 });
 
 const parsed = EnvSchema.safeParse(process.env);
