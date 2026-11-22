@@ -2,7 +2,13 @@ import { describe, expect, it } from "vitest";
 import { LoginSchema, RegisterSchema, UserPublicSchema } from "./auth.js";
 import { HomeSummarySchema } from "./home.js";
 import { CreateProjectSchema, UpdateProjectSchema } from "./projects.js";
-import { CreateTaskSchema } from "./tasks.js";
+import {
+  CreateTaskSchema,
+  MoveTaskSchema,
+  TaskStatusSchema,
+  UpdateTaskSchema,
+} from "./tasks.js";
+import { UpdateMeSchema, UserProfileSchema } from "./users.js";
 
 describe("auth schemas", () => {
   it("validates a login payload", () => {
@@ -23,9 +29,29 @@ describe("auth schemas", () => {
 
   it("rejects a public user without a known role", () => {
     expect(
-      UserPublicSchema.safeParse({ id: 1, name: "x", email: "x@y.co", role: "owner" })
-        .success,
+      UserPublicSchema.safeParse({
+        id: 1,
+        name: "x",
+        email: "x@y.co",
+        role: "owner",
+        image: null,
+      }).success,
     ).toBe(false);
+  });
+
+  it("requires the image field on a public user", () => {
+    expect(
+      UserPublicSchema.safeParse({ id: 1, name: "x", email: "x@y.co", role: "dev" }).success,
+    ).toBe(false);
+    expect(
+      UserPublicSchema.safeParse({
+        id: 1,
+        name: "x",
+        email: "x@y.co",
+        role: "dev",
+        image: "https://x.co/a.png",
+      }).success,
+    ).toBe(true);
   });
 });
 
@@ -43,6 +69,70 @@ describe("project schemas", () => {
 describe("task schemas", () => {
   it("defaults status to todo", () => {
     expect(CreateTaskSchema.parse({ title: "ship it" }).status).toBe("todo");
+  });
+
+  it("defaults priority to medium", () => {
+    expect(CreateTaskSchema.parse({ title: "ship it" }).priority).toBe("medium");
+  });
+
+  it("accepts explicit priorities", () => {
+    expect(CreateTaskSchema.parse({ title: "ship it", priority: "low" }).priority).toBe("low");
+    expect(CreateTaskSchema.parse({ title: "ship it", priority: "high" }).priority).toBe("high");
+  });
+
+  it("rejects an unknown priority", () => {
+    expect(
+      CreateTaskSchema.safeParse({ title: "ship it", priority: "urgent" }).success,
+    ).toBe(false);
+  });
+
+  it("accepts backlog as a status", () => {
+    expect(TaskStatusSchema.parse("backlog")).toBe("backlog");
+  });
+
+  it("rejects an unknown status", () => {
+    expect(TaskStatusSchema.safeParse("blocked").success).toBe(false);
+  });
+
+  it("allows priority as a partial update but leaves it undefined when omitted", () => {
+    const withPriority = UpdateTaskSchema.parse({ priority: "high" });
+    expect(withPriority.priority).toBe("high");
+    expect(UpdateTaskSchema.parse({}).priority).toBeUndefined();
+  });
+
+  it("accepts backlog as a move target", () => {
+    expect(MoveTaskSchema.parse({ status: "backlog" }).status).toBe("backlog");
+  });
+});
+
+describe("user profile schemas", () => {
+  it("accepts a full profile including a null image", () => {
+    expect(
+      UserProfileSchema.safeParse({
+        id: 1,
+        email: "ada@bolder.local",
+        name: "Ada",
+        role: "dev",
+        image: null,
+      }).success,
+    ).toBe(true);
+  });
+
+  it("allows partial updates", () => {
+    expect(UpdateMeSchema.safeParse({}).success).toBe(true);
+    expect(UpdateMeSchema.parse({ name: "  Ada  " }).name).toBe("Ada");
+    expect(UpdateMeSchema.parse({ image: "" }).image).toBe("");
+  });
+
+  it("rejects empty or oversized names", () => {
+    expect(UpdateMeSchema.safeParse({ name: "   " }).success).toBe(false);
+    expect(UpdateMeSchema.safeParse({ name: "x".repeat(81) }).success).toBe(false);
+  });
+
+  it("rejects non-http image URLs, including script schemes", () => {
+    expect(UpdateMeSchema.safeParse({ image: "https://x.co/a.png" }).success).toBe(true);
+    expect(UpdateMeSchema.safeParse({ image: "javascript:alert(1)" }).success).toBe(false);
+    expect(UpdateMeSchema.safeParse({ image: "data:text/html,x" }).success).toBe(false);
   });
 });
 

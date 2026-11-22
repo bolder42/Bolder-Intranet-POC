@@ -52,4 +52,28 @@ describe('Sidebar', () => {
     expect(screen.getByText('ada@example.com')).toBeInTheDocument();
     expect(screen.getByText('Dev')).toBeInTheDocument();
   });
+
+  it('links the workspace card to the settings page', () => {
+    render(<Sidebar user={{ name: 'Ada Lovelace', email: 'ada@example.com', role: 'admin' }} />);
+
+    const card = screen.getByRole('link', { name: 'Open settings' });
+    expect(card).toHaveAttribute('href', '/app/settings');
+    expect(card).toHaveTextContent('Ada Lovelace');
+  });
+
+  it('renders the profile photo when present and the monogram otherwise', () => {
+    const { rerender } = render(
+      <Sidebar user={{ name: 'Ada', email: 'ada@example.com', role: 'dev', image: 'https://x.co/a.png' }} />,
+    );
+
+    const photo = document.querySelector('.workspace-avatar-img');
+    expect(photo).not.toBeNull();
+    expect(photo).toHaveAttribute('src', 'https://x.co/a.png');
+
+    rerender(
+      <Sidebar user={{ name: 'Ada', email: 'ada@example.com', role: 'dev', image: null }} />,
+    );
+    expect(document.querySelector('.workspace-avatar-img')).toBeNull();
+    expect(screen.getByText('A')).toBeInTheDocument();
+  });
 });

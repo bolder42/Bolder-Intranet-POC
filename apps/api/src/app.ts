@@ -6,7 +6,8 @@ import { homeRoutes } from "./modules/home/home.routes.js";
 import { invitesRoutes } from "./modules/invites/invites.routes.js";
 import { projectsRoutes } from "./modules/projects/projects.routes.js";
 import { scheduleRoutes } from "./modules/schedule/schedule.stub.js";
-import { tasksRoutes } from "./modules/tasks/tasks.stub.js";
+import { tasksRoutes } from "./modules/tasks/tasks.routes.js";
+import { usersRoutes } from "./modules/users/users.routes.js";
 import { wikiRoutes } from "./modules/wiki/wiki.stub.js";
 import { errorHandler } from "./middleware/error.js";
 import { env } from "./env.js";
@@ -44,6 +45,7 @@ export const app = new Hono<AppEnv>()
   .route("/invites", invitesRoutes)
   .route("/home", homeRoutes)
   .route("/tasks", tasksRoutes)
+  .route("/users", usersRoutes)
   .route("/wiki", wikiRoutes)
   .route("/schedule", scheduleRoutes);
 

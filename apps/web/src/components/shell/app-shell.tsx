@@ -11,6 +11,7 @@ export interface AppShellUser {
   name?: string | null;
   email?: string | null;
   role?: string | null;
+  image?: string | null;
 }
 
 export interface AppShellProps {
@@ -36,6 +37,7 @@ export function AppShell({ user, children }: AppShellProps) {
         <Header
           collapsed={collapsed}
           onToggleSidebar={() => setCollapsed((prev) => !prev)}
+          user={user}
         />
         <main className="app-content">{children}</main>
       </div>

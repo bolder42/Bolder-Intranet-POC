@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -101,5 +101,31 @@ describe('AppShell', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Expand sidebar' }));
     expect(shell).toHaveAttribute('data-sidebar-collapsed', 'false');
     expect(localStorage.getItem('sidebar-collapsed')).toBe('false');
+  });
+
+  it('shows the profile avatar in the top bar next to the theme toggle', () => {
+    renderWithProviders(
+      <AppShell
+        user={{
+          name: 'Ada Lovelace',
+          email: 'ada@example.com',
+          role: 'admin',
+          image: 'https://x.co/ada.png',
+        }}
+      >
+        <main>Page content</main>
+      </AppShell>,
+    );
+
+    const banner = screen.getByRole('banner');
+    const link = within(banner).getByRole('link', { name: 'Open settings' });
+    expect(link).toHaveAttribute('href', '/app/settings');
+    expect(link.querySelector('img.user-avatar')).toHaveAttribute(
+      'src',
+      'https://x.co/ada.png',
+    );
+
+    // The theme toggle sits beside the avatar.
+    expect(within(banner).getByRole('button', { name: /theme|mode/i })).toBeInTheDocument();
   });
 });

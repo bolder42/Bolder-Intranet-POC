@@ -1,4 +1,7 @@
 ﻿import type { ProjectParticipant } from "@bolder/shared";
+
+import { UserAvatar } from "@/components/user/user-avatar";
+
 export function Participants({ members }: { members: ProjectParticipant[] }) {
   return (
     <details className="project-participants">
@@ -14,7 +17,10 @@ export function Participants({ members }: { members: ProjectParticipant[] }) {
       <ul className="list-plain">
         {members.map((member) => (
           <li key={member.id}>
-            <strong>{member.user.name}</strong> · {member.user.role}
+            <span className="participant-head">
+              <UserAvatar name={member.user.name} image={member.user.image} size={22} />
+              <strong>{member.user.name}</strong> · {member.user.role}
+            </span>
             <br />
             {member.user.email}
           </li>

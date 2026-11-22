@@ -115,7 +115,7 @@ Explicitly out of scope for the POC to prevent drift:
 - Notifications module (deferred by decision; revisit post-POC)
 - Real-time collaboration (websockets, live cursors, presence)
 - Email digests, push notifications, external webhooks
-- Full GitHub Projects parity — kanban stays minimal: To Do / Doing / Done
+- Full GitHub Projects parity — kanban stays minimal: Backlog / To Do / Doing / Done, with a Low/Medium/High priority flag
 - Per-project customization (theming, custom workflows, custom fields)
 - Native mobile app — responsive web only
 - SSO / SAML / OAuth providers — Auth.js with email/password is enough for POC

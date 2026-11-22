@@ -131,9 +131,34 @@ Clear visualization of tasks within the project, progress, and the people respon
 
 Shows work units (tasks) and status.
 
+The board has four stages — Backlog, To Do, Doing, Done — and each task carries a priority (Low, Medium, or High; Medium by default).
+
+Every task status change is recorded — who changed it, when, and from which status to which status — so that cycle time can be analyzed later.
+
 Always belongs to a project — it is not standalone.
 
 **All participants of a project can modify the task view.**
+
+**Requires WRITE and READ access to the database.**
+
+---
+
+## Settings and profile
+
+Per-user settings page at `/app/settings`, opened by clicking the user's photo (workspace card) in the app sidebar.
+
+Each user can adjust their own profile:
+
+- **Display name** — shown on cards, comments and the sidebar.
+- **Profile photo** — set by pasting a public image URL (http/https; any image host, e.g. Pinterest or Imgur). No file upload in the POC; an empty URL removes the photo and the UI falls back to a monogram.
+
+Changes apply to the signed-in user only — there is no way to read or edit another user's profile (`GET/PATCH /api/users/me`).
+
+**Language:** the page shows a language switch with English and Portuguese. **English is the only implemented locale.** The Portuguese button exists but does not change anything yet. Whoever implements i18n later must wire that button to the chosen translation library, persist the user's choice, and translate the app copy (currently hardcoded English).
+
+Always belongs to a signed-in user — it is not standalone.
+
+**Each user can modify only their own profile.**
 
 **Requires WRITE and READ access to the database.**
 
@@ -151,6 +176,7 @@ Always belongs to a project — it is not standalone.
 | Roles                   | (extends database auth/control — no direct DB access) |
 | Invitations             | WRITE and READ (Admin) — WRITE and READ when redeeming a code; READ-ONLY for the public code check |
 | Task view per project   | WRITE and READ                               |
+| Settings and profile    | WRITE and READ                               |
 
 ---
 
@@ -163,6 +189,7 @@ Always belongs to a project — it is not standalone.
 | Schedule per project    | Tech Lead (global) or Admin                  |
 | Task view per project   | Any project participant                      |
 | Invitations             | Admin only (generate / list / revoke)        |
+| Settings and profile    | Any signed-in user (own profile only)        |
 | Any operation           | Admin (always allowed, even if not explicit)  |
 
 ---

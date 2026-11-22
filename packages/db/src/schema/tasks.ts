@@ -5,7 +5,8 @@ import { users } from "./users.js";
 
 /**
  * Kanban tasks. Always belongs to a project (`project_id` is NOT NULL).
- * Status is intentionally minimal for the POC: todo / doing / done.
+ * Status follows the board order: backlog / todo / doing / done.
+ * Priority is the Low/Medium/High flag carried by every task (default: medium).
  */
 export const tasks = sqliteTable(
   "tasks",
@@ -16,9 +17,12 @@ export const tasks = sqliteTable(
       .references(() => projects.id, { onDelete: "cascade" }),
     title: text("title").notNull(),
     description: text("description"),
-    status: text("status", { enum: ["todo", "doing", "done"] })
+    status: text("status", { enum: ["backlog", "todo", "doing", "done"] })
       .notNull()
       .default("todo"),
+    priority: text("priority", { enum: ["low", "medium", "high"] })
+      .notNull()
+      .default("medium"),
     assigneeId: integer("assignee_id", { mode: "number" }).references(
       () => users.id,
     ),
