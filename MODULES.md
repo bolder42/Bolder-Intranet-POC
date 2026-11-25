@@ -47,9 +47,13 @@ Always belongs to a project — it is not standalone.
 ## Home page
 
 Main dashboard that changes according to the user's role.
-- Whoever leads the team sees stats on the tasks of users from their projects, tasks stalled for too long, and similar insights.
-- Admins see other things available only to them: total projects, invitations, etc.
-- Regular users see their current tasks, upcoming objectives, and recent wiki activity (such as new pages).
+- **Dev:** the existing dashboard remains unchanged, except for fixing the to-do strikethrough and removing the inactive "Edit widgets" sidebar button.
+- **Tech Lead:** additional project status and team performance information appears between Quick links and the Tasks / Projects widgets. Only projects the Tech Lead participates in are included.
+- **Admin:** the same performance information, covering ALL projects regardless of participation, plus an Invitations widget to generate, copy, list, and revoke valid unused codes. Invitation writes are handled by the Invitations module, not by the Home projection.
+
+Performance shows task completion percentage, tasks in progress, overdue tasks, unassigned open tasks, the project deadline, and assigned / completed / overdue task counts per participant. These are current task counts, not individual productivity scores. Status is derived: Completed when a nonempty project has all tasks done; otherwise At risk when tasks are overdue or the project deadline has passed; otherwise In progress when any task is Doing or Done; otherwise Not started. An empty project has 0% completion.
+
+Home reads through the public service interfaces of Projects, Tasks, Wiki, and Schedule. `GET /api/home/performance` requires Tech Lead or Admin and enforces project visibility on the server. Unavailable performance data displays an error instead of sample metrics.
 
 **Requires READ-ONLY access to the database.**
 
@@ -121,7 +125,7 @@ Redeeming is not the only invitation operation reachable by an unauthenticated v
 
 ### POC status
 
-The Admin-facing management front-end is **NOT implemented** in the POC. Invitation codes are generated through an operator CLI script. An Admin dashboard for managing invitations is deferred; do not build it as part of POC scope. See [`DEFERRED.md`](./DEFERRED.md) for the CLI usage and the known limitations of this module.
+The Admin dashboard includes invitation management. Admins select the account role and expiry (1–365 days, default 7), generate a code, copy it for sharing with the registration address, and revoke active codes. Used, revoked, and expired codes remain visible without copy/revoke controls. Authorization is enforced in both server actions and the Invitations API. The operator CLI remains available: `pnpm --filter @bolder/api invite --role <role> --days <1-365>`. See [`DEFERRED.md`](./DEFERRED.md) for known limitations.
 
 ---
 

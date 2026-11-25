@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
+import { useState } from "react";
 
-import { PlusIcon } from '@/components/shell/icons';
+import { PlusIcon } from "@/components/shell/icons";
 
-const TABS = ['This week', 'This month', 'All', 'Done'] as const;
+const TABS = ["This week", "This month", "All", "Done"] as const;
 type Tab = (typeof TABS)[number];
 
 interface PlaceholderTask {
@@ -15,9 +15,9 @@ interface PlaceholderTask {
 }
 
 const PLACEHOLDER_TASKS: PlaceholderTask[] = [
-  { id: 1, name: 'Review project brief', dueDate: 'Today', done: false },
-  { id: 2, name: 'Update onboarding wiki', dueDate: 'Tomorrow', done: false },
-  { id: 3, name: 'Sync with design team', dueDate: 'Oct 12', done: true },
+  { id: 1, name: "Review project brief", dueDate: "Today", done: false },
+  { id: 2, name: "Update onboarding wiki", dueDate: "Tomorrow", done: false },
+  { id: 3, name: "Sync with design team", dueDate: "Oct 12", done: true },
 ];
 
 export interface TasksWidgetProps {
@@ -36,7 +36,8 @@ export interface TasksWidgetProps {
  * there is no associated tabpanel wiring.
  */
 export function TasksWidget({ totalCount }: TasksWidgetProps) {
-  const [activeTab, setActiveTab] = useState<Tab>('This week');
+  const [activeTab, setActiveTab] = useState<Tab>("This week");
+  const [tasks, setTasks] = useState(PLACEHOLDER_TASKS);
 
   return (
     <section aria-labelledby="tasks-title">
@@ -51,7 +52,7 @@ export function TasksWidget({ totalCount }: TasksWidgetProps) {
               key={tab}
               type="button"
               aria-pressed={active}
-              className={['widget-tab', active ? 'active' : ''].join(' ')}
+              className={["widget-tab", active ? "active" : ""].join(" ")}
               onClick={() => setActiveTab(tab)}
             >
               {tab}
@@ -64,28 +65,40 @@ export function TasksWidget({ totalCount }: TasksWidgetProps) {
           <span>Name</span>
           <span>Due date</span>
         </div>
-        {PLACEHOLDER_TASKS.map((task) => (
+        {tasks.map((task) => (
           <div key={task.id} className="widget-table-row">
             <input
               type="checkbox"
               className="widget-checkbox"
-              defaultChecked={task.done}
-              aria-label={`Mark ${task.name} as ${task.done ? 'not done' : 'done'}`}
+              checked={task.done}
+              onChange={() =>
+                setTasks((current) =>
+                  current.map((item) =>
+                    item.id === task.id ? { ...item, done: !item.done } : item,
+                  ),
+                )
+              }
+              aria-label={`Mark ${task.name} as ${task.done ? "not done" : "done"}`}
             />
-            <span style={{ textDecoration: task.done ? 'line-through' : undefined }}>
+            <span style={{ textDecoration: task.done ? "line-through" : undefined }}>
               {task.name}
             </span>
             <span className="widget-row-date">{task.dueDate}</span>
           </div>
         ))}
         {/* Placeholder add affordance — wired up once the Tasks module is implemented. */}
-        <button type="button" className="widget-add-row" disabled aria-label="Create a new task (placeholder)">
+        <button
+          type="button"
+          className="widget-add-row"
+          disabled
+          aria-label="Create a new task (placeholder)"
+        >
           <PlusIcon width={16} height={16} />
           <span>New task</span>
         </button>
       </div>
       <p className="dashboard-meta" style={{ marginTop: 8 }}>
-        {totalCount} task{totalCount === 1 ? '' : 's'} total
+        {totalCount} task{totalCount === 1 ? "" : "s"} total
       </p>
     </section>
   );
