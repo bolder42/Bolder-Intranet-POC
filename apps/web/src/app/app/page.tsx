@@ -1,14 +1,17 @@
-import type { HomeSummary, Project } from '@bolder/shared';
+import type { HomeSummary, Project } from "@bolder/shared";
+import { HomePerformanceSchema, type HomePerformance } from "@bolder/shared";
+import { ProjectPerformance } from "@/components/home/project-performance";
+import { InvitationsWidget } from "@/components/home/invitations-widget";
 
-import { auth } from '@/auth';
+import { auth } from "@/auth";
 import {
   DashboardHeader,
   NotesGrid,
   ProjectsWidget,
   QuickLinksCallout,
   TasksWidget,
-} from '@/components/home';
-import { api, getAuthHeaders } from '@/lib/api';
+} from "@/components/home";
+import { api, getAuthHeaders } from "@/lib/api";
 
 /**
  * HOME working stub.
@@ -27,26 +30,26 @@ const MOCK_SUMMARY: HomeSummary = {
     {
       id: 1,
       projectId: 1,
-      title: 'Onboarding guide',
+      title: "Onboarding guide",
       content:
-        'Welcome to Bolder! This guide covers the basics of navigating the intranet, finding projects, and contributing to the wiki.',
+        "Welcome to Bolder! This guide covers the basics of navigating the intranet, finding projects, and contributing to the wiki.",
       authorId: null,
       updatedAt: Date.now(),
     },
     {
       id: 2,
       projectId: 1,
-      title: 'Architecture decisions',
+      title: "Architecture decisions",
       content:
-        'A living record of the technical choices behind the intranet POC, including the three UI shells and module boundaries.',
+        "A living record of the technical choices behind the intranet POC, including the three UI shells and module boundaries.",
       authorId: null,
       updatedAt: Date.now(),
     },
     {
       id: 3,
       projectId: 2,
-      title: 'Q4 roadmap',
-      content: '',
+      title: "Q4 roadmap",
+      content: "",
       authorId: null,
       updatedAt: Date.now(),
     },
@@ -57,16 +60,16 @@ const MOCK_SUMMARY: HomeSummary = {
 const MOCK_PROJECTS: Project[] = [
   {
     id: 1,
-    name: 'Bolder Intranet',
-    description: 'Company intranet POC.',
+    name: "Bolder Intranet",
+    description: "Company intranet POC.",
     createdBy: null,
     deadline: null,
     createdAt: Date.now(),
   },
   {
     id: 2,
-    name: 'Website Refresh',
-    description: 'Marketing site refresh.',
+    name: "Website Refresh",
+    description: "Marketing site refresh.",
     createdBy: null,
     deadline: null,
     createdAt: Date.now(),
@@ -76,6 +79,20 @@ const MOCK_PROJECTS: Project[] = [
 export default async function HomePage() {
   const session = await auth();
   const me = session?.user;
+  const isLeadership = me?.role === "tech_lead" || me?.role === "admin";
+  let performance: HomePerformance | null = null;
+  if (isLeadership) {
+    try {
+      const headers = await getAuthHeaders();
+      const response = await api.api.home.performance.$get(
+        {},
+        { headers, init: { cache: "no-store" } },
+      );
+      if (response.ok) performance = HomePerformanceSchema.parse(await response.json());
+    } catch {
+      /* The metrics panel shows an explicit unavailable state. */
+    }
+  }
 
   let summary = MOCK_SUMMARY;
   let isMock = true;
@@ -110,9 +127,12 @@ export default async function HomePage() {
   return (
     <>
       <section className="dashboard">
-        <DashboardHeader userName={me?.name ?? me?.email ?? 'there'} />
+        <DashboardHeader userName={me?.name ?? me?.email ?? "there"} />
 
         <QuickLinksCallout />
+
+        {isLeadership && <ProjectPerformance data={performance} global={me?.role === "admin"} />}
+        {me?.role === "admin" && <InvitationsWidget />}
 
         <div className="dashboard-zone">
           <div className="dashboard-zone-column">

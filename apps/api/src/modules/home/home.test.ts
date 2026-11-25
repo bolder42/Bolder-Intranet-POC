@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import type { HomePerformance } from "@bolder/shared";
 import {
   authHeaders,
   registerUser,
@@ -39,13 +40,7 @@ beforeEach(async () => {
   outsiderToken = outsider.token;
 
   const now = Date.now();
-  const {
-    projects,
-    projectMembers,
-    tasks,
-    wikiPages,
-    scheduleItems,
-  } = h.mod;
+  const { projects, projectMembers, tasks, wikiPages, scheduleItems } = h.mod;
 
   const projectA = h.db
     .insert(projects)
@@ -151,6 +146,80 @@ async function summary(token: string) {
 }
 
 describe("home module (read-only projection)", () => {
+  async function performance(token: string) {
+    const response = await h.app.request("/api/home/performance", { headers: authHeaders(token) });
+    expect(response.status).toBe(200);
+    return (await response.json()) as HomePerformance;
+  }
+
+  it("shows only participating projects to Tech Leads, with real workload counts", async () => {
+    const body = await performance(leadToken);
+    expect(body.projects).toHaveLength(1);
+    expect(body.projects[0]).toMatchObject({
+      name: "Apollo",
+      status: "at_risk",
+      total: 2,
+      done: 0,
+      overdue: 1,
+      progress: 0,
+      unassigned: 2,
+    });
+    expect(body.projects[0]?.members).toEqual([
+      expect.objectContaining({ name: "Lead", assigned: 0, done: 0 }),
+    ]);
+    expect(JSON.stringify(body)).not.toContain("password");
+  });
+
+  it("shows Admins every project and a completed project has no overdue tasks", async () => {
+    const body = await performance(adminToken);
+    expect(body.projects).toHaveLength(2);
+    expect(body.projects.find((project) => project.name === "Bolder")).toMatchObject({
+      status: "completed",
+      progress: 100,
+      overdue: 0,
+    });
+  });
+
+  it("derives team performance from assignment and reflects status changes", async () => {
+    const body = await performance(leadToken);
+    const projectId = body.projects[0]!.id;
+    const memberId = body.projects[0]!.members[0]!.id;
+    const task = h.db
+      .select()
+      .from(h.mod.tasks)
+      .all()
+      .find((item) => item.projectId === projectId)!;
+    const update = await h.app.request(`/api/tasks/${projectId}/${task.id}`, {
+      method: "PATCH",
+      headers: { ...authHeaders(leadToken), "content-type": "application/json" },
+      body: JSON.stringify({ assigneeId: memberId }),
+    });
+    expect(update.status).toBe(200);
+    const move = await h.app.request(`/api/tasks/${projectId}/${task.id}/status`, {
+      method: "PATCH",
+      headers: { ...authHeaders(leadToken), "content-type": "application/json" },
+      body: JSON.stringify({ status: "done" }),
+    });
+    expect(move.status).toBe(200);
+    const changed = (await performance(leadToken)).projects[0]!;
+    expect(changed).toMatchObject({ progress: 50, done: 1, overdue: 0, status: "in_progress" });
+    expect(changed.members[0]).toMatchObject({ assigned: 1, done: 1, overdue: 0 });
+  });
+
+  it("handles projects without tasks without dividing by zero", async () => {
+    h.db.insert(h.mod.projects).values({ name: "Empty", createdAt: Date.now() }).run();
+    expect(
+      (await performance(adminToken)).projects.find((project) => project.name === "Empty"),
+    ).toMatchObject({ progress: 0, total: 0, status: "not_started", members: [] });
+  });
+
+  it("denies Dev and unauthenticated access to leadership metrics", async () => {
+    expect(
+      (await h.app.request("/api/home/performance", { headers: authHeaders(outsiderToken) }))
+        .status,
+    ).toBe(403);
+    expect((await h.app.request("/api/home/performance")).status).toBe(401);
+  });
   it("scopes the projection to the tech_lead's projects", async () => {
     const body = await summary(leadToken);
     expect(body.projectCount).toBe(1);

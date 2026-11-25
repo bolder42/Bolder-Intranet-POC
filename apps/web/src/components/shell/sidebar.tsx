@@ -1,15 +1,10 @@
-import Link from 'next/link';
+import Link from "next/link";
 
-import { signOutAction } from '@/app/actions';
-import { getRoleLabel } from '@/lib/utils';
+import { signOutAction } from "@/app/actions";
+import { getRoleLabel } from "@/lib/utils";
 
-import {
-  ClockIcon,
-  DashboardGridIcon,
-  FileTextIcon,
-  FolderIcon,
-} from './icons';
-import { SidebarSection, SidebarSectionAction } from './sidebar-section';
+import { ClockIcon, DashboardGridIcon, FileTextIcon, FolderIcon } from "./icons";
+import { SidebarSection, SidebarSectionAction } from "./sidebar-section";
 
 export interface SidebarUser {
   name?: string | null;
@@ -23,7 +18,7 @@ export interface SidebarProps {
 }
 
 function WorkspaceCard({ user }: { user: SidebarUser }) {
-  const displayName = user.name ?? user.email ?? 'Workspace';
+  const displayName = user.name ?? user.email ?? "Workspace";
   const initial = displayName.charAt(0).toUpperCase();
   const photo = user.image && /^https?:\/\//.test(user.image) ? user.image : null;
 
@@ -54,18 +49,12 @@ function SidebarRow({
   active?: boolean;
 }) {
   return (
-    <Link
-      href={href}
-      className="sidebar-row"
-      aria-current={active ? 'page' : undefined}
-    >
+    <Link href={href} className="sidebar-row" aria-current={active ? "page" : undefined}>
       <span className="sidebar-row-icon">{icon}</span>
       <span className="sidebar-row-label">{label}</span>
     </Link>
   );
 }
-
-
 
 /**
  * App-shell sidebar (server component).
@@ -90,11 +79,7 @@ export function Sidebar({ user }: SidebarProps) {
         {/* Placeholder project rows — the POC has a Projects module, but the
             sidebar does not fetch it to keep the server component synchronous. */}
         <SidebarRow href="/app/projects" icon={<FolderIcon />} label="All projects" />
-        <SidebarRow
-          href="/app/projects/1/tasks"
-          icon={<FileTextIcon />}
-          label="Bolder Intranet"
-        />
+        <SidebarRow href="/app/projects/1/tasks" icon={<FileTextIcon />} label="Bolder Intranet" />
         <SidebarRow href="/app/projects/2/tasks" icon={<FileTextIcon />} label="Website Refresh" />
       </SidebarSection>
 
@@ -108,18 +93,6 @@ export function Sidebar({ user }: SidebarProps) {
         <SidebarRow href="/app/projects/1/wiki" icon={<ClockIcon />} label="Wiki" />
         <SidebarRow href="/app/projects/1/schedule" icon={<ClockIcon />} label="Schedule" />
       </SidebarSection>
-
-      <div className="sidebar-footer">
-        {/* Placeholder — opens the widget customiser once widget composition exists. */}
-        <button
-          type="button"
-          className="sidebar-edit-widgets"
-          disabled
-          aria-label="Edit widgets (placeholder)"
-        >
-          Edit widgets
-        </button>
-      </div>
 
       <div className="sidebar-user">
         <form action={signOutAction} className="sidebar-user-row">

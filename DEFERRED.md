@@ -14,16 +14,11 @@ When you defer something, add it here in the same change (`AGENTS.md` §3). When
 
 ## Deferred features
 
-### Admin front-end for invitations
+### Dashboard dependencies and existing placeholders
 
-|                                |                                                                                                                                                                                                                 |
-| ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **What**                       | A page to generate, list, and revoke invite codes from the UI.                                                                                                                                                  |
-| **Status**                     | Not built. Deliberate decision.                                                                                                                                                                                 |
-| **Why**                        | The capability exists and is fully tested at the API layer; only the screen is missing. Building it was explicitly descoped to keep the POC focused.                                                            |
-| **How codes are minted today** | `pnpm --filter @bolder/api invite --role <role> --days <1-365>`<br>Add `--created-by <email>` to attribute the invite to a specific admin (defaults to the first admin).                                        |
-| **What exists already**        | `POST /api/invites` (admin), `GET /api/invites` (admin), `POST /api/invites/:id/revoke` (admin), `POST /api/invites/validate` (public). All admin endpoints are guarded by `requireGlobalRole(ctx, ["admin"])`. |
-| **If you build it**            | Put it under the **App shell** as `/app/settings/invites` — do not create a fourth UI shell (`AGENTS.md` §5.4). Add an admin-only `layout.tsx` guard; no route-level role guard exists yet.                     |
+- Wiki and Schedule HTTP CRUD remain stubs. Home reads their stored rows through project-scoped service interfaces; no Wiki/Schedule editing functionality was added by the role-based dashboard task. Their module owners must finish those APIs.
+- The Dev dashboard retains its existing sample task rows, decorative filters, and sample-data fallback when the summary API is unavailable, as required by the unchanged Dev view. Checking a sample to-do updates its local strikethrough only; it does not modify project tasks. Leadership metrics use real API data and show an explicit error when unavailable.
+- Performance reports current task completion and workload; historical cycle time, throughput, and stalled-duration analysis are deferred. The task event history remains available in the Tasks API.
 
 ---
 

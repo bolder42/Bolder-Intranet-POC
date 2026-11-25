@@ -196,6 +196,8 @@ This is the architectural invariant that keeps module owners from colliding. The
 
 ---
 
+Home composes its summary through `listProjects`, `listTasks`, `listWikiPages`, and `listScheduleItems`; it has no repository of its own. The Wiki and Schedule read interfaces exist for this projection while their HTTP CRUD endpoints remain stubs. `GET /api/home/performance` is restricted to Tech Lead and Admin and derives current task progress and participant workload from the Projects and Tasks services. Admin sees all projects; Tech Lead sees memberships only. The Admin invitation widget calls dedicated server actions in `apps/web/src/app/app/invite-actions.ts`, which enforce Admin access and delegate writes to `/api/invites`. Home endpoints remain read-only.
+
 ## 6. `project_id` partitioning
 
 Every table except `users`, `sessions`, `invites` (global — invitation codes do
