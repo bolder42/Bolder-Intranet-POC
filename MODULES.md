@@ -22,6 +22,8 @@ Project deletion is available to Admin and Tech Lead. Tech Leads MUST be partici
 
 A view similar to notion that allows each project to centralize links, documentation, and relevant references.
 
+Wiki pages use Markdown content and support Obsidian-style internal links written as `[[Page title]]`. Internal links resolve to pages in the same project; links to missing pages remain unresolved and do not create pages automatically. Page titles are unique within each project.
+
 Always belongs to a project — it is not standalone.
 
 **All participants of a project can modify the wiki.**

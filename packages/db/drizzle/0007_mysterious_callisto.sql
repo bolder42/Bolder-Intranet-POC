@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX `wiki_pages_project_title_unique` ON `wiki_pages` (`project_id`,`title`);

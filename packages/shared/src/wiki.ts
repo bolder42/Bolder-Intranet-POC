@@ -11,13 +11,13 @@ export const WikiPageSchema = z.object({
 export type WikiPage = z.infer<typeof WikiPageSchema>;
 
 export const CreateWikiSchema = z.object({
-  title: z.string().min(1),
+  title: z.string().trim().min(1),
   content: z.string().optional().default(""),
 });
 export type CreateWikiInput = z.infer<typeof CreateWikiSchema>;
 
 export const UpdateWikiSchema = z.object({
-  title: z.string().min(1).optional(),
+  title: z.string().trim().min(1).optional(),
   content: z.string().optional(),
 });
 export type UpdateWikiInput = z.infer<typeof UpdateWikiSchema>;
